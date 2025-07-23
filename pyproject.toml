@@ -1,0 +1,49 @@
+[project]
+name = "fastquat"
+dynamic = ['version']
+description = "High-performance quaternions with JAX support"
+authors = [{name = "Pierre Chanial", email = "chanial@apc.in2p3.fr"}]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "jax[cuda12]>=0.4.0",
+    "jaxlib>=0.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "ipython>=8.18.1",
+    "pytest>=8.4.1",
+]
+
+[build-system]
+requires = ['hatchling', 'uv-dynamic-versioning']
+build-backend = 'hatchling.build'
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+bump = true
+
+[tool.ruff]
+line-length = 100
+fix = true           # autofix issues
+force-exclude = true # useful with ruff-pre-commit plugin
+src = ['src', 'tests']
+
+[tool.ruff.lint]
+select = [
+    'ARG001', # flake8-unused-function-arguments
+    'E',      # pycodestyle-errors
+    'F',      # pyflakes
+    'I',      # isort
+    'UP',     # pyupgrade
+    'T10',    # flake8-debugger
+]
+
+[tool.ruff.format]
+quote-style = 'single'

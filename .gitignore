@@ -1,0 +1,9 @@
+__pycache__/
+dist/
+build/
+/.venv/
+/.idea/
+
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
