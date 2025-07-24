@@ -199,8 +199,8 @@ class Quaternion:
         safe_norm = jnp.where(norm == 0, 1.0, norm)
         return Quaternion.from_array(self.wxyz / jnp.expand_dims(safe_norm, axis=-1))
 
-    def inverse(self) -> Quaternion:
-        """Quaternion inverse."""
+    def _inverse(self) -> Quaternion:
+        """Quaternion inverse (private method - use 1/q instead)."""
         conj = self.conj()
         norm_sq = self.norm() ** 2
         return Quaternion.from_array(conj.wxyz / jnp.expand_dims(norm_sq, axis=-1))
@@ -246,7 +246,7 @@ class Quaternion:
         # Convert vector to pure quaternion
         v_quat = Quaternion(0, v[..., 0], v[..., 1], v[..., 2])
         # Apply rotation: q * v * q^-1
-        result = self * v_quat * self.inverse()
+        result = self * v_quat * self._inverse()
 
         return result.vector
 
@@ -278,7 +278,7 @@ class Quaternion:
         if isinstance(other, Quaternion):
             return Quaternion.from_array(self.wxyz + other.wxyz)
 
-        if isinstance(other, (int, float, jnp.ndarray)):
+        if isinstance(other, int | float | jnp.ndarray):
             return Quaternion.from_scalar_vector(self.w + other, self.vector)
 
         raise NotImplementedError
@@ -292,14 +292,14 @@ class Quaternion:
         if isinstance(other, Quaternion):
             return Quaternion.from_array(self.wxyz - other.wxyz)
 
-        if isinstance(other, (int, float, jnp.ndarray)):
+        if isinstance(other, int | float | jnp.ndarray):
             return Quaternion.from_scalar_vector(self.w - other, self.vector)
 
         raise NotImplementedError
 
     def __rsub__(self, other: Any) -> Quaternion:
         """Quaternion subtraction."""
-        if isinstance(other, (int, float, jnp.ndarray)):
+        if isinstance(other, int | float | jnp.ndarray):
             return Quaternion.from_scalar_vector(other - self.w, -self.vector)
 
         raise NotImplementedError
@@ -317,7 +317,7 @@ class Quaternion:
 
             return Quaternion(w, x, y, z)
 
-        if isinstance(other, (int, float)):
+        if isinstance(other, int | float):
             return Quaternion.from_array(self.wxyz * other)
 
         if isinstance(other, jnp.ndarray):
@@ -327,11 +327,34 @@ class Quaternion:
 
     def __rmul__(self, other: Any) -> Quaternion:
         """Quaternion multiplication."""
-        if isinstance(other, (int, float)):
+        if isinstance(other, int | float):
             return Quaternion.from_array(other * self.wxyz)
 
         if isinstance(other, jnp.ndarray):
             return Quaternion.from_array(jnp.expand_dims(other, axis=-1) * self.wxyz)
+
+        return NotImplemented
+
+    def __truediv__(self, other: Any) -> Quaternion:
+        """Quaternion division."""
+        if isinstance(other, Quaternion):
+            return self * other._inverse()
+
+        if isinstance(other, int | float):
+            return Quaternion.from_array(self.wxyz / other)
+
+        if isinstance(other, jnp.ndarray):
+            return Quaternion.from_array(self.wxyz / jnp.expand_dims(other, axis=-1))
+
+        return NotImplemented
+
+    def __rtruediv__(self, other: Any) -> Quaternion:
+        """Quaternion division."""
+        if isinstance(other, int | float) and other == 1:
+            return self._inverse()
+
+        if isinstance(other, int | float | jnp.ndarray):
+            return other * self._inverse()
 
         return NotImplemented
 
@@ -422,10 +445,10 @@ class Quaternion:
         # Handle special cases for integer exponents only
         if isinstance(exponent, int):
             if exponent == -2:
-                q_inv = self.inverse()
+                q_inv = self._inverse()
                 return q_inv * q_inv
             elif exponent == -1:
-                return self.inverse()
+                return self._inverse()
             elif exponent == 0:
                 return Quaternion.ones(self.shape, self.dtype)
             elif exponent == 1:

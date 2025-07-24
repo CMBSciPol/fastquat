@@ -431,7 +431,7 @@ def test_inverse_rotation(do_jit):
     def test_inverse_rot(q, v):
         # Rotate vector, then rotate back with inverse
         v_rotated = q.rotate_vector(v)
-        v_back = q.inverse().rotate_vector(v_rotated)
+        v_back = (1 / q).rotate_vector(v_rotated)
         return v_back
 
     if do_jit:

@@ -202,6 +202,222 @@ def test_quaternion_array_multiplication(do_jit):
     assert jnp.allclose(result.wxyz, expected)
 
 
+# Division
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_quaternion_division(do_jit):
+    """Test quaternion division."""
+
+    def div_quaternions(q1, q2):
+        return q1 / q2
+
+    if do_jit:
+        div_quaternions = jax.jit(div_quaternions)
+
+    # Identity quaternion
+    q1 = Quaternion.ones()
+    q2 = Quaternion(0.0, 1.0, 0.0, 0.0)
+
+    result = div_quaternions(q1, q2)
+    # q1 / q2 should equal q1 * (1 / q2)
+    expected = q1 * (1 / q2)
+    assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_quaternion_scalar_division(do_jit):
+    """Test quaternion division by scalar."""
+
+    def div_scalar(q, scalar):
+        return q / scalar
+
+    if do_jit:
+        div_scalar = jax.jit(div_scalar)
+
+    q = Quaternion(2.0, 4.0, 6.0, 8.0)
+    scalar = 2.0
+    result = div_scalar(q, scalar)
+    expected = jnp.array([1.0, 2.0, 3.0, 4.0])
+    assert jnp.allclose(result.wxyz, expected)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_quaternion_array_division(do_jit):
+    """Test quaternion division by array."""
+
+    def div_array(q, arr):
+        return q / arr
+
+    if do_jit:
+        div_array = jax.jit(div_array)
+
+    q = Quaternion.from_array(jnp.array([[2.0, 4.0, 6.0, 8.0], [3.0, 6.0, 9.0, 12.0]]))
+    arr = jnp.array([2.0, 3.0])
+    result = div_array(q, arr)
+    expected = jnp.array([[1.0, 2.0, 3.0, 4.0], [1.0, 2.0, 3.0, 4.0]])
+    assert jnp.allclose(result.wxyz, expected)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_division_identity_property(do_jit):
+    """Test that q / q approximates identity quaternion."""
+
+    def div_self(q):
+        return q / q
+
+    if do_jit:
+        div_self = jax.jit(div_self)
+
+    # Test with normalized quaternion
+    q_norm = Quaternion(1.0, 2.0, 3.0, 4.0).normalize()
+    result_norm = div_self(q_norm)
+    expected_identity = jnp.array([1.0, 0.0, 0.0, 0.0])
+    assert jnp.allclose(result_norm.wxyz, expected_identity, atol=1e-6)
+
+    # Test with non-normalized quaternion
+    q = Quaternion(2.0, 4.0, 6.0, 8.0)
+    result = div_self(q)
+    assert jnp.allclose(result.wxyz, expected_identity, atol=1e-6)
+
+
+@pytest.mark.parametrize('scalar', [1, 1.0])
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_one_quaternion_division(scalar: int | float, do_jit: bool):
+    """Test scalar division by quaternion."""
+
+    def div_scalar(scalar, q):
+        return scalar / q
+
+    if do_jit:
+        div_scalar = jax.jit(div_scalar)
+
+    q = Quaternion(1.0, 0.0, 0.0, 0.0)  # Real quaternion
+    result = div_scalar(scalar, q)
+    # scalar / q should equal scalar * (1 / q)
+    expected = scalar * q._inverse()
+    assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_scalar_quaternion_division(do_jit):
+    """Test scalar division by quaternion."""
+
+    def div_scalar(scalar, q):
+        return scalar / q
+
+    if do_jit:
+        div_scalar = jax.jit(div_scalar)
+
+    q = Quaternion(1.0, 0.0, 0.0, 0.0)  # Real quaternion
+    scalar = 2.0
+    result = div_scalar(scalar, q)
+    # scalar / q should equal scalar * (1 / q)
+    expected = scalar * q._inverse()
+    assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_array_quaternion_division(do_jit):
+    """Test array division by quaternion."""
+
+    def div_array(arr, q):
+        return arr / q
+
+    if do_jit:
+        div_array = jax.jit(div_array)
+
+    # Test with real quaternion for simplicity
+    q = Quaternion(2.0, 0.0, 0.0, 0.0)
+    arr = jnp.array([4.0, 6.0])
+    result = div_array(arr, q)
+
+    # arr / q should equal arr * (1 / q)
+    expected = arr * (1 / q)
+    assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_division_multiplication_inverse(do_jit):
+    """Test that (q1 / q2) * q2 ≈ q1."""
+
+    def div_mul_inverse(q1, q2):
+        return (q1 / q2) * q2
+
+    if do_jit:
+        div_mul_inverse = jax.jit(div_mul_inverse)
+
+    q1 = Quaternion(1.0, 2.0, 3.0, 4.0)
+    q2 = Quaternion(0.5, 1.5, 2.5, 3.5)
+
+    result = div_mul_inverse(q1, q2)
+    assert jnp.allclose(result.wxyz, q1.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_division_by_identity(do_jit):
+    """Test division by identity quaternion."""
+
+    def div_identity(q):
+        identity = Quaternion.ones()
+        return q / identity
+
+    if do_jit:
+        div_identity = jax.jit(div_identity)
+
+    q = Quaternion(1.0, 2.0, 3.0, 4.0)
+    result = div_identity(q)
+
+    # q / identity should equal q
+    assert jnp.allclose(result.wxyz, q.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_division_associativity_property(do_jit):
+    """Test division associativity: (q1 / q2) / q3 = q1 / (q2 * q3)."""
+
+    def div_associativity(q1, q2, q3):
+        left = (q1 / q2) / q3
+        right = q1 / (q3 * q2)
+        return left, right
+
+    if do_jit:
+        div_associativity = jax.jit(div_associativity)
+
+    q1 = Quaternion(1.0, 2.0, 3.0, 4.0)
+    q2 = Quaternion(0.5, 1.0, 1.5, 2.0)
+    q3 = Quaternion(2.0, 1.0, 0.5, 1.5)
+
+    left, right = div_associativity(q1, q2, q3)
+    assert jnp.allclose(left.wxyz, right.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_division_batch_operations(do_jit):
+    """Test division with batch of quaternions."""
+
+    def batch_div(q1_batch, q2_batch):
+        return q1_batch / q2_batch
+
+    if do_jit:
+        batch_div = jax.jit(batch_div)
+
+    # Create batches of quaternions
+    q1_batch = Quaternion.from_array(
+        jnp.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+    )
+    q2_batch = Quaternion.from_array(
+        jnp.array([[2.0, 0.0, 0.0, 0.0], [0.0, 2.0, 0.0, 0.0], [0.0, 0.0, 2.0, 0.0]])
+    )
+
+    result = batch_div(q1_batch, q2_batch)
+
+    # Check each result individually
+    for i in range(3):
+        q1 = Quaternion.from_array(q1_batch.wxyz[i])
+        q2 = Quaternion.from_array(q2_batch.wxyz[i])
+        expected = q1 / q2
+        assert jnp.allclose(result.wxyz[i], expected.wxyz, atol=1e-6)
+
+
 # Negation
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_quaternion_negation(do_jit):
@@ -380,7 +596,7 @@ def test_quaternion_inverse(do_jit):
     """Test quaternion inverse."""
 
     def get_inverse(q):
-        return q.inverse()
+        return 1 / q
 
     if do_jit:
         get_inverse = jax.jit(get_inverse)
@@ -399,7 +615,7 @@ def test_unit_quaternion_inverse(do_jit):
     """Test unit quaternion inverse equals conjugate."""
 
     def get_inverse_and_conj(q):
-        return q.inverse(), q.conj()
+        return 1 / q, q.conj()
 
     if do_jit:
         get_inverse_and_conj = jax.jit(get_inverse_and_conj)
@@ -723,7 +939,7 @@ def test_power_special_case_neg_two(do_jit):
     result = power_neg_two(q)
 
     # Should equal (q^-1)^2
-    expected = q.inverse() * q.inverse()
+    expected = (1 / q) * (1 / q)
     assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-6)
 
 
@@ -740,8 +956,8 @@ def test_power_special_case_neg_one(do_jit):
     q = Quaternion(1.0, 2.0, 3.0, 4.0)
     result = power_neg_one(q)
 
-    # Should equal q.inverse()
-    expected = q.inverse()
+    # Should equal 1 / q
+    expected = 1 / q
     assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-6)
 
 
@@ -835,7 +1051,7 @@ def test_power_integer_negative(do_jit):
 
     # Test q^-3
     result_neg3 = power_integer(q, -3)
-    q_inv = q.inverse()
+    q_inv = 1 / q
     expected_neg3 = q_inv * q_inv * q_inv
     assert jnp.allclose(result_neg3.wxyz, expected_neg3.wxyz, atol=1e-5)
 
