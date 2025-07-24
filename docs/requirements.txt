@@ -1,0 +1,17 @@
+# Documentation dependencies for FastQuat
+# This file ensures compatibility with Read the Docs and other documentation platforms
+# that don't yet fully support PEP 735 dependency groups
+
+# Core dependencies
+jax[cuda12]>=0.4.0
+jaxlib>=0.4.0
+
+# Documentation-specific dependencies
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+myst-parser>=2.0.0
+nbsphinx>=0.9.0
+jupyter>=1.0.0
+matplotlib>=3.7.0
+numpy>=1.24.0
+pillow>=9.0.0
