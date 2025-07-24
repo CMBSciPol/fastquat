@@ -379,3 +379,102 @@ def test_factory_methods_empty_shape():
     q_full = Quaternion.full((0,), 2.0)
     assert q_full.shape == (0,)
     assert q_full.wxyz.shape == (0, 4)
+
+
+# Iteration tests
+def test_iter_0d_quaternion():
+    """Test that iteration over 0-d quaternion raises TypeError."""
+    q = Quaternion.ones()  # 0-dimensional quaternion
+    assert q.ndim == 0
+
+    with pytest.raises(TypeError, match='iteration over a 0-d quaternion'):
+        _ = list(q)
+
+    with pytest.raises(TypeError, match='iteration over a 0-d quaternion'):
+        for _ in q:
+            pass
+
+
+def test_iter_1d_quaternion():
+    """Test iteration over 1-dimensional quaternion array."""
+    # Create a 1D array of quaternions
+    q_array = Quaternion.from_array(
+        jnp.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+    )
+
+    assert q_array.ndim == 1
+    assert q_array.shape == (3,)
+
+    # Test iteration
+    quaternions = list(q_array)
+
+    assert len(quaternions) == 3
+
+    # Check each quaternion
+    assert jnp.allclose(quaternions[0].wxyz, jnp.array([1.0, 0.0, 0.0, 0.0]))
+    assert jnp.allclose(quaternions[1].wxyz, jnp.array([0.0, 1.0, 0.0, 0.0]))
+    assert jnp.allclose(quaternions[2].wxyz, jnp.array([0.0, 0.0, 1.0, 0.0]))
+
+    # Each element should be 0-dimensional
+    for q in quaternions:
+        assert q.ndim == 0
+        assert q.shape == ()
+
+
+def test_iter_2d_quaternion():
+    """Test iteration over 2-dimensional quaternion array."""
+    # Create a 2D array of quaternions (2x3)
+    q_array = Quaternion.ones((2, 3))  # All identity quaternions
+
+    assert q_array.ndim == 2
+    assert q_array.shape == (2, 3)
+
+    # Test iteration - should iterate over first axis
+    rows = list(q_array)
+
+    assert len(rows) == 2
+
+    # Each row should be 1-dimensional with shape (3,)
+    for row in rows:
+        assert row.ndim == 1
+        assert row.shape == (3,)
+
+        # Each element in the row should be identity quaternion
+        for q in row:
+            assert q.ndim == 0
+            assert jnp.allclose(q.wxyz, jnp.array([1.0, 0.0, 0.0, 0.0]))
+
+
+def test_iter_empty_quaternion():
+    """Test iteration over empty quaternion array."""
+    q_empty = Quaternion.zeros((0,))
+
+    assert q_empty.ndim == 1
+    assert q_empty.shape == (0,)
+
+    # Should be iterable but produce no elements
+    quaternions = list(q_empty)
+    assert len(quaternions) == 0
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_iter(do_jit):
+    """Test that iteration works with JIT compilation context."""
+
+    def use_iteration(q_array):
+        # This function uses iteration implicitly
+        result = []
+        for q in q_array:
+            result.append(q.norm())
+        return jnp.array(result)
+
+    if do_jit:
+        use_iteration = jax.jit(use_iteration)
+
+    q_array = Quaternion.from_array(
+        jnp.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+    )
+
+    norms = use_iteration(q_array)
+    expected_norms = jnp.array([1.0, 1.0, 1.0])
+    assert jnp.allclose(norms, expected_norms)

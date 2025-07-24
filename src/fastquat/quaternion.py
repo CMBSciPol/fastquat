@@ -266,6 +266,13 @@ class Quaternion:
             raise TypeError('len() of unsized object')
         return self.shape[0]
 
+    def __iter__(self):
+        """Iterate over the first axis."""
+        if self.ndim == 0:
+            raise TypeError('iteration over a 0-d quaternion')
+        for i in range(self.shape[0]):
+            yield Quaternion.from_array(self.wxyz[i])
+
     def __add__(self, other: Any) -> Quaternion:
         """Quaternion addition."""
         if isinstance(other, Quaternion):
@@ -532,7 +539,7 @@ class Quaternion:
         use_linear = dot > threshold
 
         # Linear interpolation case
-        result_linear = q1.wxyz + t * jnp.expand_dims(1 - t, -1) * (q2_corrected - q1.wxyz)
+        result_linear = q1.wxyz + jnp.expand_dims(t * (1 - t), -1) * (q2_corrected - q1.wxyz)
         result_linear = Quaternion.from_array(result_linear).normalize()
 
         # Spherical interpolation case
