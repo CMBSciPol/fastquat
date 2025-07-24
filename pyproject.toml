@@ -28,16 +28,14 @@ docs = [
 ]
 
 [build-system]
-requires = ['hatchling', 'uv-dynamic-versioning']
+requires = ['hatchling', 'hatch-vcs']
 build-backend = 'hatchling.build'
 
 [tool.hatch.version]
-source = "uv-dynamic-versioning"
+source = 'vcs'
 
-[tool.uv-dynamic-versioning]
-vcs = "git"
-style = "pep440"
-bump = true
+[tool.uv]
+cache-keys = [{ git = true }]
 
 [tool.ruff]
 line-length = 100
