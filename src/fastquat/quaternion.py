@@ -503,3 +503,54 @@ class Quaternion:
 
     def devices(self) -> set[jax.Device[Any]]:
         return self.wxyz.devices()
+
+    def slerp(self, other: Quaternion, t: float | Array) -> Quaternion:
+        """Spherical linear interpolation between two quaternions.
+
+        Args:
+            other: Target quaternion to interpolate towards
+            t: Interpolation parameter in [0, 1]. t=0 returns self, t=1 returns other
+
+        Returns:
+            Interpolated quaternion
+        """
+        # Ensure both quaternions are normalized
+        q1 = self.normalize()
+        q2 = other.normalize()
+
+        # Compute dot product
+        dot = jnp.sum(q1.wxyz * q2.wxyz, axis=-1)
+
+        # If dot product is negative, slerp won't take the shorter path.
+        # Note that this is necessary to handle the double cover of SO(3)
+        # by unit quaternions: q and -q represent the same rotation.
+        q2_corrected = jnp.where(jnp.expand_dims(dot < 0, -1), -q2.wxyz, q2.wxyz)
+        dot = jnp.abs(dot)
+
+        # If quaternions are very close, use linear interpolation to avoid numerical issues
+        threshold = 0.9995
+        use_linear = dot > threshold
+
+        # Linear interpolation case
+        result_linear = q1.wxyz + t * jnp.expand_dims(1 - t, -1) * (q2_corrected - q1.wxyz)
+        result_linear = Quaternion.from_array(result_linear).normalize()
+
+        # Spherical interpolation case
+        theta = jnp.arccos(jnp.clip(dot, 0.0, 1.0))
+        sin_theta = jnp.sin(theta)
+
+        # Avoid division by zero
+        safe_sin_theta = jnp.where(sin_theta == 0, 1.0, sin_theta)
+
+        factor1 = jnp.sin((1 - t) * theta) / safe_sin_theta
+        factor2 = jnp.sin(t * theta) / safe_sin_theta
+
+        result_slerp = (
+            jnp.expand_dims(factor1, -1) * q1.wxyz + jnp.expand_dims(factor2, -1) * q2_corrected
+        )
+        result_slerp = Quaternion.from_array(result_slerp)
+
+        # Choose between linear and spherical interpolation
+        result = jnp.where(jnp.expand_dims(use_linear, -1), result_linear.wxyz, result_slerp.wxyz)
+
+        return Quaternion.from_array(result)

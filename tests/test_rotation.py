@@ -447,3 +447,206 @@ def test_inverse_rotation(do_jit):
 
     # Should recover original vector
     assert jnp.allclose(v_recovered, v, atol=1e-6)
+
+
+# SLERP tests
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_endpoints(do_jit):
+    """Test SLERP at endpoints t=0 and t=1."""
+
+    def slerp_test(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    # Two different quaternions
+    q1 = Quaternion.ones()  # Identity
+    q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0).normalize()  # 90° around x
+
+    # Test t=0 (should return q1)
+    result_0 = slerp_test(q1, q2, 0.0)
+    assert jnp.allclose(result_0.wxyz, q1.wxyz, atol=1e-6)
+
+    # Test t=1 (should return q2, up to sign)
+    result_1 = slerp_test(q1, q2, 1.0)
+    # Check if result == q2 or result == -q2 (quaternion double cover)
+    assert jnp.allclose(result_1.wxyz, q2.wxyz, atol=1e-6) or jnp.allclose(
+        result_1.wxyz, -q2.wxyz, atol=1e-6
+    )
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_midpoint(do_jit):
+    """Test SLERP at midpoint t=0.5."""
+
+    def slerp_test(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    # Identity and 90° rotation around x
+    q1 = Quaternion.ones()
+    q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0).normalize()
+
+    result = slerp_test(q1, q2, 0.5)
+
+    # At t=0.5, should be 45° rotation around x
+    angle_45 = jnp.pi / 4
+    expected = Quaternion(jnp.cos(angle_45 / 2), jnp.sin(angle_45 / 2), 0.0, 0.0)
+
+    # Allow sign ambiguity
+    assert jnp.allclose(result.wxyz, expected.wxyz, atol=1e-4) or jnp.allclose(
+        result.wxyz, -expected.wxyz, atol=1e-4
+    )
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_preserves_normalization(do_jit):
+    """Test that SLERP result is always normalized."""
+
+    def slerp_test(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    # Random quaternions
+    key = jax.random.PRNGKey(42)
+    key1, key2 = jax.random.split(key)
+    q1 = Quaternion.random(key1)
+    q2 = Quaternion.random(key2)
+
+    # Test at various t values
+    t_values = jnp.array([0.0, 0.25, 0.5, 0.75, 1.0])
+
+    for t in t_values:
+        result = slerp_test(q1, q2, t)
+        norm = result.norm()
+        assert jnp.allclose(norm, 1.0, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_shortest_path(do_jit):
+    """Test that SLERP takes the shortest path."""
+
+    def slerp_test(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    # Test with quaternions that have negative dot product
+    q1 = Quaternion(1.0, 0.0, 0.0, 0.0)
+    q2 = Quaternion(-0.7071, 0.7071, 0.0, 0.0)  # Negative w
+
+    result = slerp_test(q1, q2, 0.5)
+
+    # The interpolation should flip q2 to take shorter path
+    # Result should be between q1 and the flipped version of q2
+    assert result.norm() > 0.9  # Should be normalized
+
+    # The dot product between q1 and the result should be positive
+    # (indicating we're moving in the right direction)
+    dot = jnp.sum(q1.wxyz * result.wxyz)
+    assert dot > 0
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_identical_quaternions(do_jit):
+    """Test SLERP with identical quaternions."""
+
+    def slerp_test(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    q = Quaternion.random(jax.random.PRNGKey(42))
+
+    # SLERP between identical quaternions should return the same quaternion
+    result = slerp_test(q, q, 0.5)
+    assert jnp.allclose(result.wxyz, q.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_batch(do_jit):
+    """Test SLERP with batch of quaternions."""
+
+    def slerp_test(q1_batch, q2_batch, t):
+        return q1_batch.slerp(q2_batch, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    # Batch of quaternions
+    q1_batch = Quaternion.from_array(
+        jnp.array([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]])
+    )
+
+    q2_batch = Quaternion.from_array(
+        jnp.array(
+            [[0.7071, 0.7071, 0.0, 0.0], [0.7071, 0.0, 0.7071, 0.0], [0.7071, 0.0, 0.0, 0.7071]]
+        )
+    )
+
+    result_batch = slerp_test(q1_batch, q2_batch, 0.5)
+
+    assert result_batch.shape == (3,)
+
+    # All results should be normalized
+    norms = result_batch.norm()
+    assert jnp.allclose(norms, 1.0, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_array_t(do_jit):
+    """Test SLERP with array of t values."""
+
+    def slerp_test(q1, q2, t_array):
+        return q1.slerp(q2, t_array)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    q1 = Quaternion.ones()
+    q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0).normalize()
+
+    t_array = jnp.array([0.0, 0.5, 1.0])
+    result = slerp_test(q1, q2, t_array)
+
+    assert result.shape == (3,)
+
+    # Check endpoints
+    assert jnp.allclose(result.wxyz[0], q1.wxyz, atol=1e-6)
+    # Allow sign ambiguity for t=1
+    assert jnp.allclose(result.wxyz[2], q2.wxyz, atol=1e-6) or jnp.allclose(
+        result.wxyz[2], -q2.wxyz, atol=1e-6
+    )
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_close_quaternions(do_jit):
+    """Test SLERP with very close quaternions (should use linear interpolation)."""
+
+    def slerp_test(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        slerp_test = jax.jit(slerp_test)
+
+    # Very close quaternions (dot product > 0.9995)
+    q1 = Quaternion(1.0, 0.0, 0.0, 0.0)
+    q2 = Quaternion(0.9999, 0.001, 0.0, 0.0).normalize()
+
+    result = slerp_test(q1, q2, 0.5)
+
+    # Should still be normalized and reasonable
+    assert jnp.allclose(result.norm(), 1.0, atol=1e-6)
+
+    # Result should be between the two quaternions
+    dot1 = jnp.sum(q1.wxyz * result.wxyz)
+    dot2 = jnp.sum(q2.wxyz * result.wxyz)
+    assert dot1 > 0.9  # Close to both
+    assert dot2 > 0.9
