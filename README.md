@@ -95,7 +95,7 @@ vectors = jax.random.normal(key, (1000, 3))
 rotated_batch = batch_rotate(q_batch, vectors)
 ```
 
-### SLERP Animation
+### SLERP
 ```python
 # Smooth rotation interpolation
 q_start = Quaternion.ones()

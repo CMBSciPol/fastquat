@@ -2,12 +2,6 @@
 
 This section contains practical examples demonstrating FastQuat's capabilities.
 
-```{toctree}
-:maxdepth: 1
-
-spherical_cap.ipynb
-slerp_animation.ipynb
-```
 
 ## Quaternion Rotation and Spherical Cap Visualization
 
@@ -18,7 +12,7 @@ This [example](spherical_cap.ipynb) shows how to:
 * Visualize quaternion rotations with spherical caps
 * Demonstrate quaternion multiplication for creating compound rotations
 
-## SLERP Visualization on the Sphere
+## SLERP Visualization on the Unit Sphere
 
 This [example](slerp_animation.ipynb) demonstrates:
 

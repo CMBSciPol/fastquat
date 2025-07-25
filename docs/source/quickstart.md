@@ -35,7 +35,8 @@ Quaternions support standard mathematical operations:
 # Arithmetic
 q_sum = q1 + q2
 q_diff = q1 - q2
-q_product = q1 * q2  # Quaternion multiplication
+q_product = q1 * q2
+q_power = q1 ** p
 
 # Normalization
 q_unit = q1.normalize()  # Unit quaternion
@@ -43,7 +44,11 @@ norm = q1.norm()         # Quaternion norm
 
 # Conjugation and inverse
 q_conj = q1.conj()       # Conjugate
-q_inv = 1 / q1           # Inverse, or q1**-1
+q_inv = 1 / q1           # Inverse, or q1 ** -1
+
+# Other operations
+q_log = q1.log()
+q_exp = q1.exp()
 ```
 
 ## Vector Rotation
