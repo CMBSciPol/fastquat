@@ -16,6 +16,12 @@ FastQuat provides optimized quaternion operations with full JAX compatibility, f
 ```bash
 pip install fastquat
 ```
+This will install FastQuat with CPU support. For GPU support, you may need to install JAX with CUDA support:
+
+```bash
+pip install "jax[cuda12]" fastquat
+```
+
 
 ## Quick Start
 
