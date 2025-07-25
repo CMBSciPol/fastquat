@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # Project information
 project = 'FastQuat'
-copyright = '2024, Pierre Chanial'
+copyright = '2025, Pierre Chanial'
 author = 'Pierre Chanial'
 release = '0.1.0'
 
@@ -37,6 +37,7 @@ source_suffix = ['.rst', '.md']
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 html_theme_options = {
+    'repository_url': 'https://github.com/CMBSciPol/fastquat',
     'canonical_url': '',
     'analytics_id': '',
     'logo_only': False,

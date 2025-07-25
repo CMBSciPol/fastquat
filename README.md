@@ -35,7 +35,7 @@ q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 
 # Quaternion operations
 q3 = q1 * q2  # Multiplication
-q_inv = q1.inverse()  # Inverse
+q_inv = 1 / q1           # Inverse, or q1 ** -1
 q_norm = q1.normalize()  # Normalization
 
 # Rotate vectors
@@ -49,7 +49,7 @@ interpolated = q1.slerp(q2, t=0.5)  # Halfway between q1 and q2
 ## Features
 
 ### Core Operations
-- **Quaternion arithmetic**: Addition, multiplication, conjugation, inverse
+- **Quaternion arithmetic**: Addition, multiplication, conjugation, inverse, power, exponentiation, logarithm
 - **Normalization**: Efficient unit quaternion computation
 - **Conversion**: To/from rotation matrices, Euler angles
 - **Vector rotation**: Direct vector transformation

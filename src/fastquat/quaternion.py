@@ -273,6 +273,10 @@ class Quaternion:
         for i in range(self.shape[0]):
             yield Quaternion.from_array(self.wxyz[i])
 
+    def __neg__(self) -> Quaternion:
+        """Quaternion negation."""
+        return Quaternion.from_array(-self.wxyz)
+
     def __add__(self, other: Any) -> Quaternion:
         """Quaternion addition."""
         if isinstance(other, Quaternion):
@@ -358,9 +362,36 @@ class Quaternion:
 
         return NotImplemented
 
-    def __neg__(self) -> Quaternion:
-        """Quaternion negation."""
-        return Quaternion.from_array(-self.wxyz)
+    def __pow__(self, exponent: float | int | Array) -> Quaternion:
+        """Quaternion exponentiation q^n.
+
+        For integer exponents, uses optimized special cases.
+        For non-integer exponents, uses the general formula: q^n = exp(n * log(q))
+
+        Args:
+            exponent: The exponent (scalar or array)
+
+        Returns:
+            The quaternion raised to the given power
+        """
+        # Handle special cases for integer exponents only
+        if isinstance(exponent, int):
+            if exponent == -2:
+                q_inv = self._inverse()
+                return q_inv * q_inv
+            elif exponent == -1:
+                return self._inverse()
+            elif exponent == 0:
+                return Quaternion.ones(self.shape, self.dtype)
+            elif exponent == 1:
+                return self
+            elif exponent == 2:
+                return self * self
+
+        # General case: q^n = exp(n * log(q))
+        log_q = self.log()
+        n_log_q = exponent * log_q
+        return n_log_q.exp()
 
     def log(self) -> Quaternion:
         """Compute quaternion logarithm.
@@ -429,37 +460,6 @@ class Quaternion:
         )
 
         return Quaternion.from_scalar_vector(result_w, result_vector)
-
-    def __pow__(self, exponent: float | int | Array) -> Quaternion:
-        """Quaternion exponentiation q^n.
-
-        For integer exponents, uses optimized special cases.
-        For non-integer exponents, uses the general formula: q^n = exp(n * log(q))
-
-        Args:
-            exponent: The exponent (scalar or array)
-
-        Returns:
-            The quaternion raised to the given power
-        """
-        # Handle special cases for integer exponents only
-        if isinstance(exponent, int):
-            if exponent == -2:
-                q_inv = self._inverse()
-                return q_inv * q_inv
-            elif exponent == -1:
-                return self._inverse()
-            elif exponent == 0:
-                return Quaternion.ones(self.shape, self.dtype)
-            elif exponent == 1:
-                return self
-            elif exponent == 2:
-                return self * self
-
-        # General case: q^n = exp(n * log(q))
-        log_q = self.log()
-        n_log_q = exponent * log_q
-        return n_log_q.exp()
 
     @property
     def nbytes(self) -> int:
