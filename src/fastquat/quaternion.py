@@ -396,8 +396,8 @@ class Quaternion:
     def log(self) -> Quaternion:
         """Compute quaternion logarithm.
 
-        For a quaternion q = |q| * (cos(θ) + sin(θ)v), the logarithm is:
-        log(q) = log(|q|) + θ * v
+        For a quaternion q = ‖q‖ * (cos(θ) + sin(θ)v), the logarithm is:
+        log(q) = log(‖q‖) + θ * v
 
         Returns:
             The logarithm of the quaternion
@@ -433,7 +433,7 @@ class Quaternion:
         """Compute quaternion exponential.
 
         For a quaternion q = s + v, the exponential is:
-        exp(q) = exp(s) * (cos(|v|) + sin(|v|) * v/|v|)
+        exp(q) = exp(s) * (cos(‖v‖) + sin(‖v‖) * v/‖v‖)
 
         Returns:
             The exponential of the quaternion

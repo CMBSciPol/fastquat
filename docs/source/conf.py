@@ -7,6 +7,9 @@ import sys
 # Add the source path
 sys.path.insert(0, os.path.abspath('../../src'))
 
+# Force JAX to use CPU only to avoid CUDA warnings in documentation
+os.environ['JAX_PLATFORMS'] = 'cpu'
+
 # Project information
 project = 'FastQuat'
 copyright = '2025, Pierre Chanial'
@@ -31,17 +34,15 @@ exclude_patterns = []
 
 # Set the master document to index.md instead of index.rst
 master_doc = 'index'
-source_suffix = ['.rst', '.md']
+source_suffix = ['.md']
 
 # Options for HTML output
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 html_theme_options = {
-    'repository_url': 'https://github.com/CMBSciPol/fastquat',
     'canonical_url': '',
     'analytics_id': '',
     'logo_only': False,
-    'display_version': True,
     'prev_next_buttons_location': 'bottom',
     'style_external_links': False,
     'vcs_pageview_mode': '',
@@ -50,7 +51,7 @@ html_theme_options = {
     'sticky_navigation': True,
     'navigation_depth': 4,
     'includehidden': True,
-    'titles_only': False,
+    'titles_only': True,
 }
 
 # Autodoc options

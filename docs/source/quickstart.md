@@ -160,5 +160,5 @@ gradients = grad_fn(jnp.array([1.0, 0.1, 0.1, 0.1]))
 ## Next Steps
 
 * Explore the [examples](examples/index.md) for detailed use cases
-* Check the [API reference](api/index.rst) for complete API documentation
+* Check the [API reference](api/index.md) for complete API documentation
 * See advanced interpolation techniques with SLERP
