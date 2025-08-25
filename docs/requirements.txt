@@ -3,7 +3,7 @@
 # that don't yet fully support PEP 735 dependency groups
 
 # Core dependencies
-jax[cuda12]>=0.4.0
+jax>=0.4.0
 jaxlib>=0.4.0
 
 # Documentation-specific dependencies

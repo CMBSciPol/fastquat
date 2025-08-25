@@ -7,9 +7,6 @@ import sys
 # Add the source path
 sys.path.insert(0, os.path.abspath('../../src'))
 
-# Force JAX to use CPU only to avoid CUDA warnings in documentation
-os.environ['JAX_PLATFORMS'] = 'cpu'
-
 # Project information
 project = 'FastQuat'
 copyright = '2025, Pierre Chanial'
@@ -34,7 +31,7 @@ exclude_patterns = []
 
 # Set the master document to index.md instead of index.rst
 master_doc = 'index'
-source_suffix = ['.md']
+source_suffix = {'.md': 'restructuredtext'}
 
 # Options for HTML output
 html_theme = 'sphinx_rtd_theme'
