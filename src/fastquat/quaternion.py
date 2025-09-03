@@ -375,7 +375,7 @@ class Quaternion:
             The quaternion raised to the given power
         """
         # Handle special cases for integer exponents only
-        if isinstance(exponent, int):
+        if isinstance(exponent, int | float):
             if exponent == -2:
                 q_inv = self._inverse()
                 return q_inv * q_inv
@@ -387,11 +387,15 @@ class Quaternion:
                 return self
             elif exponent == 2:
                 return self * self
+            return (exponent * self.log()).exp()
 
         # General case: q^n = exp(n * log(q))
-        log_q = self.log()
-        n_log_q = exponent * log_q
-        return n_log_q.exp()
+        result = (exponent * self.log()).exp().wxyz
+        return Quaternion.from_array(
+            jnp.where(
+                exponent[..., None] == 0, jnp.array([1.0, 0.0, 0.0, 0.0], dtype=self.dtype), result
+            )
+        )
 
     def log(self) -> Quaternion:
         """Compute quaternion logarithm.
@@ -406,6 +410,7 @@ class Quaternion:
         q_norm = self.norm()
 
         # Normalize to get unit quaternion (handles zero quaternions safely)
+        # Note that the norm is not computed again for jitted functions.
         unit_q = self.normalize()
 
         # For unit quaternion q = cos(θ) + sin(θ)v, compute θ and v
@@ -414,18 +419,12 @@ class Quaternion:
         vector_norm = jnp.linalg.norm(unit_q.vector, axis=-1)
 
         # Handle case where vector is zero (real quaternion)
-        safe_vector_norm = jnp.where(vector_norm == 0, 1.0, vector_norm)
-        unit_vector = unit_q.vector / jnp.expand_dims(safe_vector_norm, -1)
+        inv_vector_norm = jnp.where(vector_norm == 0, 0.0, 1 / vector_norm)
+        unit_vector = unit_q.vector * inv_vector_norm[..., None]
 
         # log(q) = log(|q|) + θ * v
-        log_norm = jnp.log(jnp.maximum(q_norm, 1e-10))  # Avoid log(0)
-        theta_expanded = jnp.expand_dims(theta, -1)
-        log_q_vector = theta_expanded * unit_vector
-
-        # Handle zero vector case (real quaternion)
-        log_q_vector = jnp.where(
-            jnp.expand_dims(vector_norm == 0, -1), jnp.zeros_like(log_q_vector), log_q_vector
-        )
+        log_norm = jnp.log(q_norm)
+        log_q_vector = theta[..., None] * unit_vector
 
         return Quaternion.from_scalar_vector(log_norm, log_q_vector)
 
@@ -448,16 +447,11 @@ class Quaternion:
         sin_vnorm = jnp.sin(vector_norm)
 
         # Handle case where |v| = 0 (real quaternion)
-        safe_vector_norm = jnp.where(vector_norm == 0, 1.0, vector_norm)
-        unit_v = vector_part / jnp.expand_dims(safe_vector_norm, -1)
+        inv_vector_norm = jnp.where(vector_norm == 0, 0.0, 1 / vector_norm)
+        unit_v = vector_part * jnp.expand_dims(inv_vector_norm, -1)
 
         result_w = exp_scalar * cos_vnorm
         result_vector = exp_scalar * jnp.expand_dims(sin_vnorm, -1) * unit_v
-
-        # Handle zero vector case
-        result_vector = jnp.where(
-            jnp.expand_dims(vector_norm == 0, -1), jnp.zeros_like(result_vector), result_vector
-        )
 
         return Quaternion.from_scalar_vector(result_w, result_vector)
 

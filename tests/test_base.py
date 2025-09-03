@@ -12,7 +12,7 @@ from fastquat.quaternion import Quaternion
 
 # Factories
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_init_creation(do_jit):
+def test_init_creation(do_jit: bool):
     """Test quaternion creation from individual components."""
 
     def create_quaternion(w, x, y, z):
@@ -27,7 +27,7 @@ def test_init_creation(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_from_array_creation(do_jit):
+def test_from_array_creation(do_jit: bool):
     """Test quaternion creation from array."""
 
     def create_from_array(arr):
@@ -43,7 +43,7 @@ def test_from_array_creation(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_from_scalar_vector_creation(do_jit):
+def test_from_scalar_vector_creation(do_jit: bool):
     """Test quaternion creation from scalar and vector parts."""
 
     def create_from_scalar_vector(scalar, vector):
@@ -60,7 +60,7 @@ def test_from_scalar_vector_creation(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_random_creation(do_jit):
+def test_random_creation(do_jit: bool):
     """Test random quaternion creation."""
 
     def create_random(key):
@@ -86,7 +86,7 @@ def test_random_creation(do_jit):
 
 # Properties
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_w_property(do_jit):
+def test_w_property(do_jit: bool):
     """Test w property access."""
 
     def get_w(q):
@@ -101,7 +101,7 @@ def test_w_property(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_x_property(do_jit):
+def test_x_property(do_jit: bool):
     """Test x property access."""
 
     def get_x(q):
@@ -116,7 +116,7 @@ def test_x_property(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_y_property(do_jit):
+def test_y_property(do_jit: bool):
     """Test y property access."""
 
     def get_y(q):
@@ -131,7 +131,7 @@ def test_y_property(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_z_property(do_jit):
+def test_z_property(do_jit: bool):
     """Test z property access."""
 
     def get_z(q):
@@ -146,7 +146,7 @@ def test_z_property(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_vector_property(do_jit):
+def test_vector_property(do_jit: bool):
     """Test vector property access."""
 
     def get_vector(q):
@@ -163,7 +163,7 @@ def test_vector_property(do_jit):
 
 # to_components method
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_to_components(do_jit):
+def test_to_components(do_jit: bool):
     """Test to_components method."""
 
     def get_components(q):
@@ -198,7 +198,7 @@ def test_repr_tensor():
 
 # Edge cases
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_from_array_wrong_shape(do_jit):
+def test_from_array_wrong_shape(do_jit: bool):
     """Test from_array with wrong shape raises ValueError."""
 
     def create_from_wrong_array(arr):
@@ -212,7 +212,7 @@ def test_from_array_wrong_shape(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_from_scalar_vector_wrong_shape(do_jit):
+def test_from_scalar_vector_wrong_shape(do_jit: bool):
     """Test from_scalar_vector with wrong vector shape raises ValueError."""
 
     def create_from_wrong_vector(scalar, vector):
@@ -228,10 +228,10 @@ def test_from_scalar_vector_wrong_shape(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_broadcasting_creation(do_jit):
+def test_broadcasting_creation(do_jit: bool):
     """Test quaternion creation with broadcasting."""
 
-    def create_with_broadcasting(w, x, y, z):
+    def create_with_broadcasting(w, x, y, z) -> Quaternion:
         return Quaternion(w, x, y, z)
 
     if do_jit:
@@ -250,10 +250,10 @@ def test_broadcasting_creation(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_batch_properties(do_jit):
+def test_batch_properties(do_jit: bool):
     """Test properties work with batched quaternions."""
 
-    def get_all_properties(q):
+    def get_all_properties(q: Quaternion):
         return q.w, q.x, q.y, q.z, q.vector
 
     if do_jit:
@@ -273,10 +273,10 @@ def test_batch_properties(do_jit):
 
 # Factory methods tests
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_zeros_factory(do_jit):
+def test_zeros_factory(do_jit: bool):
     """Test Quaternion.zeros() creates quaternions with all components zero."""
 
-    def create_zeros(shape):
+    def create_zeros(shape: tuple[int, ...]) -> Quaternion:
         return Quaternion.zeros(shape)
 
     if do_jit:
@@ -294,10 +294,10 @@ def test_zeros_factory(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_ones_factory(do_jit):
+def test_ones_factory(do_jit: bool):
     """Test Quaternion.ones() creates quaternions with w=1, x=y=z=0."""
 
-    def create_ones(shape):
+    def create_ones(shape: tuple[int, ...]) -> Quaternion:
         return Quaternion.ones(shape)
 
     if do_jit:
@@ -317,10 +317,10 @@ def test_ones_factory(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_full_factory(do_jit):
+def test_full_factory(do_jit: bool):
     """Test Quaternion.full() creates quaternions with w=fill_value, x=y=z=0."""
 
-    def create_full(shape, fill_value):
+    def create_full(shape: tuple[int, ...], fill_value: float) -> Quaternion:
         return Quaternion.full(shape, fill_value)
 
     if do_jit:
@@ -458,10 +458,10 @@ def test_iter_empty_quaternion():
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_iter(do_jit):
+def test_iter(do_jit: bool):
     """Test that iteration works with JIT compilation context."""
 
-    def use_iteration(q_array):
+    def use_iteration(q_array: Quaternion):
         # This function uses iteration implicitly
         result = []
         for q in q_array:
