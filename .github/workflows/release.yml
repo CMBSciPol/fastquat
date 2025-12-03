@@ -29,26 +29,16 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Debug Git tags and versioning
+      - name: Check tag of last commit
         run: |
-          echo "Git tags:"
-          git tag -l
           echo "Current tag:"
-          git describe --tags --exact-match HEAD || echo "No exact tag match"
-          echo "Version info:"
-          git describe --tags --always
+          git describe --tags --exact-match HEAD
 
       - name: Clean uv cache for dynamic versioning
         run: uv cache clean
 
       - name: Build package
         run: uv build
-
-      - name: Verify build artifacts
-        run: |
-          ls -la dist/
-          echo "Built artifacts:"
-          find dist/ -name "*.whl" -o -name "*.tar.gz" | head -10
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
