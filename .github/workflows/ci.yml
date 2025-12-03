@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -51,8 +53,15 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync --group dev
+      - name: Build wheel
+        run: uv build --wheel
+
+      - name: Install project's wheel and dependencies
+        run: |
+          uv sync --group dev --no-install-project
+          uv pip install dist/fastquat-*.whl
 
       - name: Run tests
-        run: uv run pytest -v
+        run: |
+          source .venv/bin/activate
+          pytest -v
