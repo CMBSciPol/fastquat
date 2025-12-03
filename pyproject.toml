@@ -29,6 +29,7 @@ cuda12 = [
 dev = [
     "ipython>=8.18.1",
     "pytest>=8.4.1",
+    "visu-hlo",
 ]
 docs = [
     "sphinx>=7.0.0",
