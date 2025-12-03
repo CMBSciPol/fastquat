@@ -22,6 +22,14 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+[project.urls]
+homepage = 'https://fastquat.readthedocs.io'
+repository = 'https://github.com/CMBSciPol/fastquat'
+
+[build-system]
+requires = ['hatchling', 'hatch-vcs']
+build-backend = 'hatchling.build'
+
 [dependency-groups]
 cuda12 = [
     "jax[cuda12]>=0.4",
@@ -41,14 +49,6 @@ docs = [
     "numpy>=1.24.0",
     "pillow>=9.0.0",
 ]
-
-[project.urls]
-homepage = 'https://fastquat.readthedocs.io'
-repository = 'https://github.com/CMBSciPol/fastquat'
-
-[build-system]
-requires = ['hatchling', 'hatch-vcs']
-build-backend = 'hatchling.build'
 
 [tool.hatch.version]
 source = 'vcs'
