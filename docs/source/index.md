@@ -23,7 +23,7 @@ import jax.numpy as jnp
 from fastquat import Quaternion
 
 # Create quaternions
-q1 = Quaternion.ones()  # Identity quaternion
+q1 = Quaternion(1.0)  # Identity quaternion
 q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 
 # Quaternion operations

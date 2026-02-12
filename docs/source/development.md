@@ -105,36 +105,58 @@ FastQuat is designed for high performance. When contributing:
 Here's how to add a new method to the Quaternion class:
 
 ```python
-def new_method(self, parameter: Array) -> Quaternion:
-    """Brief description of what the method does.
+from typing import Self
 
-    Args:
-        parameter: Description of the parameter
+import jax.numpy as jnp
+from jax.typing import ArrayLike
 
-    Returns:
-        Description of the return value
-    """
-    # Implementation using JAX operations
-    result = jnp.some_operation(self.wxyz, parameter)
-    return Quaternion.from_array(result)
+
+class Quaternion:
+   ...
+   def new_method(self, parameter: ArrayLike) -> Self:
+       """Brief description of what the method does.
+
+       Args:
+           parameter: Description of the parameter
+
+       Returns:
+           Description of the return value
+       """
+       # Implementation using JAX operations
+       parameter = jnp.asarray(parameter)
+       result = jnp.some_operation(self.wxyz, parameter)
+       return Quaternion.from_array(result)
 ```
 
 Then add tests:
 
 ```python
+import jax
+import jax.numpy as jnp
+import pytest
+
+from fastquat import Quaternion
+
+
+@pytest.mark.parametrize(
+   'parameter, expected_values',
+   [
+      (..., ...),
+   ]
+)
 @pytest.mark.parametrize('do_jit', [False, True])
-def test_new_method(do_jit):
+def test_new_method(parameter, expected_values, do_jit):
     """Test the new method."""
-    def test_fn(q, param):
-        return q.new_method(param)
+    def test_fn(q_, parameter_):
+        return q_.new_method(parameter_)
 
     if do_jit:
-        test_fn = jax.jit(test_fn)
+        test_fn = jax.jit(test_fn, static_argnums=1)
 
     # Test implementation
-    q = Quaternion.ones()
+    q = Quaternion(1.0)
     result = test_fn(q, parameter)
-    assert jnp.allclose(result.wxyz, expected_result)
+    assert jnp.allclose(result.wxyz, expected_values)
 ```
 
 ## Documentation

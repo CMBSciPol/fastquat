@@ -14,7 +14,7 @@ from fastquat import Quaternion
 q1 = Quaternion(1.0, 0.0, 0.0, 0.0)  # Identity quaternion
 
 # Convenience constructors
-q_identity = Quaternion.ones()  # Identity quaternion
+q_identity = Quaternion(1.0)  # Identity quaternion
 q_zero = Quaternion.zeros()     # Zero quaternion
 
 # From arrays
@@ -85,7 +85,7 @@ SLERP provides smooth interpolation between quaternions:
 
 ```python
 # Two different orientations
-q_start = Quaternion.ones()  # Identity
+q_start = Quaternion(1.0)  # Identity
 q_end = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° around x
 
 # Interpolate between them

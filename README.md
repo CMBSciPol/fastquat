@@ -30,7 +30,7 @@ import jax.numpy as jnp
 from fastquat import Quaternion
 
 # Create quaternions
-q1 = Quaternion.ones()  # Identity quaternion
+q1 = Quaternion(1)  # Identity quaternion
 q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 
 # Quaternion operations
@@ -98,7 +98,7 @@ rotated_batch = batch_rotate(q_batch, vectors)
 ### SLERP
 ```python
 # Smooth rotation interpolation
-q_start = Quaternion.ones()
+q_start = Quaternion(1.0)
 q_end = Quaternion.from_rotation_matrix(rotation_matrix)
 
 # Generate smooth interpolation

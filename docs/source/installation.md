@@ -57,7 +57,7 @@ import fastquat
 from fastquat import Quaternion
 
 # Create a simple quaternion
-q = Quaternion.ones()
+q = Quaternion(1.0)
 print(f"Identity quaternion: {q}")
 
 # Test SLERP functionality
