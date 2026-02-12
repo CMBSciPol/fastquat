@@ -497,7 +497,7 @@ def test_normalize_preserves_direction(do_jit):
 
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_normalize_zero_quaternion(do_jit):
-    """Test normalization of zero quaternion returns identity."""
+    """Test normalization of zero quaternion returns NaN."""
 
     def func(q):
         return q.normalize()
@@ -509,9 +509,8 @@ def test_normalize_zero_quaternion(do_jit):
     q_zero = Quaternion(0.0)
     q_norm = func(q_zero)
 
-    # Should return identity quaternion
-    expected_identity = jnp.array([0.0, 0.0, 0.0, 0.0])
-    assert jnp.allclose(q_norm.wxyz, expected_identity)
+    # Should return NaN
+    assert jnp.all(jnp.isnan(q_norm.wxyz))
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
@@ -540,9 +539,8 @@ def test_normalize_tensor_with_zero(do_jit):
     expected_first = jnp.array([1.0, 2.0, 3.0, 4.0]) / jnp.sqrt(30)
     assert jnp.allclose(q_norm_tensor.wxyz[0], expected_first)
 
-    # Second quaternion (zero) should become zero
-    expected_zero = jnp.array([0.0, 0.0, 0.0, 0.0])
-    assert jnp.allclose(q_norm_tensor.wxyz[1], expected_zero)
+    # Second quaternion (zero) should become NaN
+    assert jnp.all(jnp.isnan(q_norm_tensor.wxyz[1]))
 
     # Third quaternion should be normalized normally
     expected_third = jnp.array([1.0, 0.0, 0.0, 0.0])

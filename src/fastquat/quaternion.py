@@ -211,12 +211,10 @@ class Quaternion:
         """Normalize the quaternion.
 
         Returns the normalized quaternion. If the quaternion has zero norm,
-        returns the zero quaternion [0, 0, 0, 0].
+        returns the quaternion [NaN, NaN, NaN, NaN].
         """
         norm = self.norm()
-        # Avoid division by zero
-        safe_norm = jnp.where(norm == 0, 1.0, norm)
-        return Quaternion.from_array(self.wxyz / jnp.expand_dims(safe_norm, axis=-1))
+        return Quaternion.from_array(self.wxyz / jnp.expand_dims(norm, axis=-1))
 
     def _inverse(self) -> Self:
         """Quaternion inverse (private method - use 1/q instead)."""
@@ -440,24 +438,27 @@ class Quaternion:
         For a quaternion q = ‖q‖ * (cos(θ) + sin(θ)v), the logarithm is:
         log(q) = log(‖q‖) + θ * v
 
+        For the zero quaternion, returns (-inf, 0, 0, 0).
+
         Returns:
             The logarithm of the quaternion
         """
-        # Get norm and handle zero quaternion
         q_norm = self.norm()
 
-        # Normalize to get unit quaternion (handles zero quaternions safely)
-        # Note that the norm is not computed again for jitted functions.
-        unit_q = self.normalize()
+        # Normalize manually to handle zero quaternion (returns 0 instead of NaN)
+        safe_norm = jnp.where(q_norm == 0, 1.0, q_norm)
+        unit_wxyz = self.wxyz / jnp.expand_dims(safe_norm, axis=-1)
 
         # For unit quaternion q = cos(θ) + sin(θ)v, compute θ and v
         # θ = arccos(w) and v = vector/|vector|
-        theta = jnp.arccos(jnp.clip(unit_q.w, -1.0, 1.0))
-        vector_norm = jnp.linalg.norm(unit_q.vector, axis=-1)
+        unit_w = unit_wxyz[..., 0]
+        unit_vector = unit_wxyz[..., 1:]
+        theta = jnp.arccos(jnp.clip(unit_w, -1.0, 1.0))
+        vector_norm = jnp.linalg.norm(unit_vector, axis=-1)
 
         # Handle case where vector is zero (real quaternion)
         inv_vector_norm = jnp.where(vector_norm == 0, 0.0, 1 / vector_norm)
-        unit_vector = unit_q.vector * inv_vector_norm[..., None]
+        unit_vector = unit_vector * inv_vector_norm[..., None]
 
         # log(q) = log(|q|) + θ * v
         log_norm = jnp.log(q_norm)
