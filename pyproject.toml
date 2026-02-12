@@ -35,8 +35,10 @@ cuda12 = [
     "jax[cuda12]>=0.4",
 ]
 dev = [
+    {include-group = "docs"},
     "ipython>=8.18.1",
-    "pytest>=8.4.1",
+    "pytest>=9.0",
+    "pytest-notebook>=0.10",
     "visu-hlo",
 ]
 docs = [
@@ -53,8 +55,16 @@ docs = [
 [tool.hatch.version]
 source = 'vcs'
 
-[tool.uv]
-cache-keys = [{ git = true }]
+[tool.pytest]
+nb_test_files = true
+nb_diff_ignore = [
+    '/cells/*/execution_count',
+    '/cells/*/outputs',
+    '/metadata/language_info/version',
+]
+filterwarnings = [
+    'ignore::pytest.PytestRemovedIn9Warning',
+]
 
 [tool.ruff]
 line-length = 100
@@ -74,3 +84,6 @@ select = [
 
 [tool.ruff.format]
 quote-style = 'single'
+
+[tool.uv]
+cache-keys = [{ git = true }]
