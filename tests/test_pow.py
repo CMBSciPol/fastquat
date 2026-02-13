@@ -282,7 +282,7 @@ def test_pow_preserves_unit_norm(exponent, do_jit):
 
     q = Quaternion(0.5, 0.5, 0.5, 0.5).normalize()
     result = func(q)
-    assert jnp.allclose(result.norm(), 1.0, atol=1e-5)
+    assert jnp.allclose(abs(result), 1.0, atol=1e-5)
 
 
 @pytest.mark.parametrize('do_jit', [False, True])

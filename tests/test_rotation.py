@@ -439,7 +439,7 @@ def test_slerp_preserves_normalization(t, do_jit):
     q2 = Quaternion.random(key2)
 
     result = func(q1, q2)
-    assert jnp.allclose(result.norm(), 1.0, atol=1e-6)
+    assert jnp.allclose(abs(result), 1.0, atol=1e-6)
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
@@ -459,7 +459,7 @@ def test_slerp_shortest_path(do_jit):
     result = func(q1, q2, 0.5)
 
     # Should be normalized
-    assert result.norm() > 0.9
+    assert abs(result) > 0.9
 
     # The dot product between q1 and the result should be positive
     dot = jnp.sum(q1.wxyz * result.wxyz)
@@ -505,7 +505,7 @@ def test_slerp_batch(do_jit):
     result_batch = func(q1_batch, q2_batch, 0.5)
 
     assert result_batch.shape == (3,)
-    assert jnp.allclose(result_batch.norm(), 1.0, atol=1e-6)
+    assert jnp.allclose(abs(result_batch), 1.0, atol=1e-6)
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
@@ -550,7 +550,7 @@ def test_slerp_close_quaternions(do_jit):
     result = func(q1, q2, 0.5)
 
     # Should still be normalized and reasonable
-    assert jnp.allclose(result.norm(), 1.0, atol=1e-6)
+    assert jnp.allclose(abs(result), 1.0, atol=1e-6)
 
     # Result should be between the two quaternions
     dot1 = jnp.sum(q1.wxyz * result.wxyz)

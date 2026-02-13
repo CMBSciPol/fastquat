@@ -40,7 +40,7 @@ q_power = q1 ** p
 
 # Normalization
 q_unit = q1.normalize()  # Unit quaternion
-norm = q1.norm()         # Quaternion norm
+norm = abs(q1)           # Quaternion norm
 
 # Conjugation and inverse
 q_conj = q1.conj()       # Conjugate

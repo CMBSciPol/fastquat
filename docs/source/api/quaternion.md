@@ -39,7 +39,7 @@ compilation, automatic differentiation, and vectorization.
 ## Core Operations
 
 ```{eval-rst}
-.. automethod:: fastquat.Quaternion.norm
+.. automethod:: fastquat.Quaternion.__abs__
 .. automethod:: fastquat.Quaternion.normalize
 .. automethod:: fastquat.Quaternion.conjugate
 .. automethod:: fastquat.Quaternion.conj

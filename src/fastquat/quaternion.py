@@ -203,7 +203,7 @@ class Quaternion:
         """Vector part (..., 3)"""
         return self.wxyz[..., 1:]
 
-    def norm(self) -> Array:
+    def __abs__(self) -> Array:
         """Quaternion norm."""
         return jnp.sqrt(jnp.sum(self.wxyz**2, axis=-1))
 
@@ -213,13 +213,13 @@ class Quaternion:
         Returns the normalized quaternion. If the quaternion has zero norm,
         returns the quaternion [NaN, NaN, NaN, NaN].
         """
-        norm = self.norm()
+        norm = abs(self)
         return Quaternion.from_array(self.wxyz / jnp.expand_dims(norm, axis=-1))
 
     def _inverse(self) -> Self:
         """Quaternion inverse (private method - use 1/q instead)."""
         conj = self.conj()
-        norm_sq = self.norm() ** 2
+        norm_sq = jnp.sum(self.wxyz**2, axis=-1)
         return Quaternion.from_array(conj.wxyz / jnp.expand_dims(norm_sq, axis=-1))
 
     def to_components(self) -> tuple[Array, Array, Array, Array]:
@@ -443,7 +443,7 @@ class Quaternion:
         Returns:
             The logarithm of the quaternion
         """
-        q_norm = self.norm()
+        q_norm = abs(self)
 
         # Normalize manually to handle zero quaternion (returns 0 instead of NaN)
         safe_norm = jnp.where(q_norm == 0, 1.0, q_norm)

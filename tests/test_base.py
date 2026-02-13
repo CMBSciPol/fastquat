@@ -253,7 +253,7 @@ def test_random_factory(enable_x64: None, shape: tuple[int, ...], dtype: DTypeLi
     q = create(key, shape, dtype)
     assert q.wxyz.shape == shape + (4,)
     assert q.wxyz.dtype == dtype
-    assert jnp.allclose(q.norm(), 1.0)  # Should be normalized
+    assert jnp.allclose(abs(q), 1.0)  # Should be normalized
 
 
 def test_factories_default_dtype():

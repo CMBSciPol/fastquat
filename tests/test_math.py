@@ -435,7 +435,7 @@ def test_norm(do_jit):
     """Test quaternion norm calculation."""
 
     def func(q):
-        return q.norm()
+        return abs(q)
 
     if do_jit:
         func = jax.jit(func)
@@ -451,7 +451,7 @@ def test_norm_unit(do_jit):
     """Test unit quaternion norm is 1."""
 
     def func(q):
-        return q.norm()
+        return abs(q)
 
     if do_jit:
         func = jax.jit(func)
@@ -474,7 +474,7 @@ def test_normalize(do_jit):
 
     q = Quaternion(1.0, 2.0, 3.0, 4.0)
     q_norm = func(q)
-    assert jnp.allclose(q_norm.norm(), 1.0)
+    assert jnp.allclose(abs(q_norm), 1.0)
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
