@@ -4,9 +4,8 @@
 
 FastQuat requires:
 
-* Python 3.9 or later
+* Python 3.10 or later
 * JAX 0.4.0 or later
-* JAXLib 0.4.0 or later
 
 ## Installing from PyPI
 
@@ -22,38 +21,33 @@ This will install FastQuat with CPU support. For GPU support, you may need to in
 pip install "jax[cuda12]" fastquat
 ```
 
-## Installing from Source
-
-To install the latest development version:
-
-```bash
-git clone https://github.com/CMBSciPol/fastquat.git
-cd fastquat
-pip install -e .
-```
-
 ## Development Installation
 
-For development, install with additional dependencies:
+For development, additional dependencies should be installed and it can be streamlined using the
+[uv package manager](https://docs.astral.sh/uv/getting-started/installation).
 
 ```bash
-git clone https://github.com/CMBSciPol/fastquat.git
+git clone https://github.com/CMBSciPol/fastquat
 cd fastquat
-pip install -e ".[dev]"
+uv sync --group cuda12
+source .venv/bin/activate
+
+# To run QA
+uv tool install pre-commit
+pre-commit install
 ```
 
 This includes:
 
 * pytest for testing
-* ruff for code formatting and linting
-* ipython for interactive development
+* pre-commit for code formatting and linting
+
 
 ## Verification
 
 To verify your installation, run:
 
 ```python
-import fastquat
 from fastquat import Quaternion
 
 # Create a simple quaternion

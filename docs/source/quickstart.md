@@ -8,22 +8,28 @@ There are several ways to create quaternions:
 
 ```python
 import jax.numpy as jnp
+import jax.random as jr
 from fastquat import Quaternion
 
 # From components (w, x, y, z)
-q1 = Quaternion(1.0, 0.0, 0.0, 0.0)  # Identity quaternion
+q1 = Quaternion(0.0, -1.0, -1.0, -1.0)
+
+identity = Quaternion(1.0)
+i = Quaternion(x=1)
+j = Quaternion(y=1)
+k = Quaternion(z=1)
 
 # Convenience constructors
-q_identity = Quaternion(1.0)  # Identity quaternion
-q_zero = Quaternion.zeros()     # Zero quaternion
+q_zeros = Quaternion.zeros((2, 3))
+q_ones = Quaternion.ones((2, 3))
+q_twos = Quaternion.full((2, 3), 2)
 
 # From arrays
 array = jnp.array([1.0, 0.0, 0.0, 0.0])
 q2 = Quaternion.from_array(array)
 
 # Random normalized quaternions
-import jax
-key = jax.random.PRNGKey(42)
+key = jr.key(42)
 q_random = Quaternion.random(key)
 ```
 
@@ -36,19 +42,19 @@ Quaternions support standard mathematical operations:
 q_sum = q1 + q2
 q_diff = q1 - q2
 q_product = q1 * q2
-q_power = q1 ** p
+q_power = q ** p
 
 # Normalization
-q_unit = q1.normalize()  # Unit quaternion
-norm = abs(q1)           # Quaternion norm
+norm = abs(q)           # Quaternion norm
+q_unit = q.normalize()  # Unit quaternion
 
 # Conjugation and inverse
-q_conj = q1.conj()       # Conjugate
-q_inv = 1 / q1           # Inverse, or q1 ** -1
+q_conj = q.conj()       # Conjugate
+q_inv = 1 / q           # Inverse, or q ** -1
 
 # Other operations
-q_log = q1.log()
-q_exp = q1.exp()
+q_log = q.log()
+q_exp = q.exp()
 ```
 
 ## Vector Rotation
