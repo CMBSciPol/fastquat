@@ -58,7 +58,7 @@ jobs:
 
       - name: Install project's wheel and dependencies
         run: |
-          uv sync --group dev --no-install-project
+          uv sync --locked --no-install-project
           uv pip install dist/fastquat-*.whl
 
       - name: Run tests
