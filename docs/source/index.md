@@ -19,25 +19,29 @@ FastQuat provides optimized quaternion operations with full JAX compatibility, f
 ## Quick Start
 
 ```python
-import jax.numpy as jnp
 from fastquat import Quaternion
 
 # Create quaternions
 q1 = Quaternion(1.0)  # Identity quaternion
 q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
-
-# Quaternion operations
-q3 = q1 * q2  # Multiplication
-q_inv = 1 / q1  # Inverse
-q_norm = q1.normalize()  # Normalization
-
-# Rotate vectors
-vector = jnp.array([1.0, 0.0, 0.0])
-rotated = q2.rotate_vector(vector)
-
-# Spherical interpolation (SLERP)
-interpolated = q1.slerp(q2, t=0.5)  # Halfway between q1 and q2
 ```
+
+## Quaternion Operations
+
+| Operation | Syntax | Description |
+|-----------|--------|-------------|
+| Addition | `q1 + q2` | Component-wise addition |
+| Subtraction | `q1 - q2` | Component-wise subtraction |
+| Multiplication | `q1 * q2` | Hamilton product |
+| Exponentiation | `q ** p` | Quaternion power |
+| Inverse | `1 / q` | Multiplicative inverse |
+| Norm | `abs(q)` | Quaternion magnitude |
+| Normalization | `q.normalize()` | Unit quaternion |
+| Conjugate | `q.conj()` | Quaternion conjugate |
+| Rotation | `q.rotate_vector(v)` | Rotate 3D vector |
+| SLERP | `q1.slerp(q2, t)` | Spherical interpolation |
+| Log | `q.log()` | Quaternion logarithm |
+| Exp | `q.exp()` | Quaternion exponential |
 
 ```{toctree}
 :maxdepth: 2

@@ -32,11 +32,26 @@ from fastquat import Quaternion
 # Create quaternions
 q1 = Quaternion(1)  # Identity quaternion
 q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
+q = Quaternion(1.0, 0.1, 0.2, 0.3)
+p = 2
 
-# Quaternion operations
-q3 = q1 * q2  # Multiplication
-q_inv = 1 / q1           # Inverse, or q1 ** -1
-q_norm = q1.normalize()  # Normalization
+# Arithmetic
+q_sum = q1 + q2
+q_diff = q1 - q2
+q_product = q1 * q2
+q_power = q**p
+
+# Normalization
+norm = abs(q)  # Quaternion norm
+q_unit = q.normalize()  # Unit quaternion
+
+# Conjugation and inverse
+q_conj = q.conj()  # Conjugate
+q_inv = 1 / q  # Inverse, or q ** -1
+
+# Other operations
+q_log = q.log()
+q_exp = q.exp()
 
 # Rotate vectors
 vector = jnp.array([1.0, 0.0, 0.0])
