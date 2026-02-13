@@ -4,6 +4,9 @@
 import os
 import sys
 
+# Force JAX to use CPU only (must be set before JAX is imported)
+os.environ['JAX_PLATFORMS'] = 'cpu'
+
 # Add the source path
 sys.path.insert(0, os.path.abspath('../../src'))
 

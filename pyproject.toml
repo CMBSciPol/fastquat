@@ -59,7 +59,7 @@ nb_test_files = true
 nb_diff_ignore = [
     '/cells/*/execution_count',
     '/cells/*/outputs',
-    '/metadata/language_info/version',
+    '/metadata/language_info',
 ]
 filterwarnings = [
     'ignore::pytest.PytestRemovedIn9Warning',

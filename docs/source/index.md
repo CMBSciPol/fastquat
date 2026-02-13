@@ -39,35 +39,28 @@ rotated = q2.rotate_vector(vector)
 interpolated = q1.slerp(q2, t=0.5)  # Halfway between q1 and q2
 ```
 
-## Contents
-
 ```{toctree}
 :maxdepth: 2
 :caption: User Guide
 
-installation.md
-quickstart.md
-```
-
-```{toctree}
-:maxdepth: 2
-:caption: Examples
-
-examples/index.md
+user-guide/installation
+user-guide/getting-started
+user-guide/tutorial-rotations
+user-guide/tutorial-slerp
 ```
 
 ```{toctree}
 :maxdepth: 2
 :caption: API Reference
 
-api/index
+api/quaternion
 ```
 
 ```{toctree}
 :maxdepth: 1
 :caption: Development
 
-development.md
+development
 ```
 
 ## Indices and tables
