@@ -292,6 +292,12 @@ class Quaternion:
         for i in range(self.shape[0]):
             yield Quaternion.from_array(self.wxyz[i])
 
+    def __getitem__(self, idx: Any) -> Self:
+        """Index or slice the tensor of quaternions."""
+        if not isinstance(idx, tuple):
+            idx = (idx,)
+        return Quaternion.from_array(self.wxyz[(*idx, slice(None))])
+
     def __pos__(self) -> Self:
         """Quaternion positive."""
         return self
