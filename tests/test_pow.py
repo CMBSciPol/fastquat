@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import jax.test_util
 import pytest
 
 from fastquat import Quaternion
@@ -386,3 +387,50 @@ def test_pow_zero_quaternion(cast_type, do_jit):
     # 0^n for n > 0 should give 0
     result_0_2 = func(zero_q, cast_type(2.0))
     assert jnp.allclose(result_0_2.wxyz, zero_q.wxyz)
+
+
+# Gradients of logarithm and exponential
+@pytest.mark.parametrize(
+    'wxyz',
+    [
+        [0.0, 0.0, 0.0, 0.0],  # pure zero: exp at the identity
+        [0.3, 0.0, 0.0, 0.0],  # real
+        [0.0, 0.1, -0.2, 0.3],  # pure imaginary
+        [0.5, 0.1, -0.2, 0.3],
+    ],
+)
+def test_exp_grads(wxyz, enable_x64):
+    """Test exp derivatives up to second order, including at a zero vector part."""
+    jax.test_util.check_grads(
+        lambda a: Quaternion.from_array(a).exp().wxyz, (jnp.array(wxyz),), order=2
+    )
+
+
+@pytest.mark.parametrize(
+    'wxyz',
+    [
+        [1.0, 0.0, 0.0, 0.0],  # identity
+        [2.0, 0.0, 0.0, 0.0],  # real
+        [0.0, 0.1, -0.2, 0.3],  # pure imaginary
+        [0.5, 0.1, -0.2, 0.3],
+    ],
+)
+def test_log_grads(wxyz, enable_x64):
+    """Test log derivatives, including at a zero vector part."""
+    jax.test_util.check_grads(
+        lambda a: Quaternion.from_array(a).log().wxyz, (jnp.array(wxyz),), order=1
+    )
+
+
+def test_exp_jacobian_at_zero():
+    """Test that d exp(v)/dv at v = 0 maps the vector part onto itself."""
+    jac = jax.jacobian(lambda v: Quaternion.from_scalar_vector(0.0, v).exp().wxyz)(jnp.zeros(3))
+    expected = jnp.concatenate([jnp.zeros((1, 3)), jnp.eye(3)])
+    assert jnp.allclose(jac, expected)
+
+
+def test_log_jacobian_at_identity():
+    """Test that d log(1 + v)/dv at v = 0 maps the vector part onto itself."""
+    jac = jax.jacobian(lambda v: Quaternion.from_scalar_vector(1.0, v).log().wxyz)(jnp.zeros(3))
+    expected = jnp.concatenate([jnp.zeros((1, 3)), jnp.eye(3)])
+    assert jnp.allclose(jac, expected)
