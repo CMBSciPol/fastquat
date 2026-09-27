@@ -455,8 +455,8 @@ class Quaternion:
     def log(self) -> Self:
         """Compute quaternion logarithm.
 
-        For a quaternion q = ‖q‖ * (cos(θ) + sin(θ)v), the logarithm is:
-        log(q) = log(‖q‖) + θ * v
+        For a quaternion q = |q| * (cos(θ) + sin(θ)v), the logarithm is:
+        log(q) = log(|q|) + θ * v
 
         For the zero quaternion, returns (-inf, 0, 0, 0).
 
@@ -468,12 +468,12 @@ class Quaternion:
         vector_norm_sq = jnp.sum(vector_part**2, axis=-1)
         is_real = vector_norm_sq == 0
 
-        # log(q) = log(‖q‖) + θ * v/‖v‖, with θ = atan2(‖v‖, s).
-        # The where guards keep the gradients finite for real quaternions (‖v‖ = 0).
+        # log(q) = log(|q|) + θ * v/|v|, with θ = atan2(|v|, s).
+        # The where guards keep the gradients finite for real quaternions (|v| = 0).
         log_norm = 0.5 * jnp.log(scalar_part**2 + vector_norm_sq)
         safe_vector_norm = jnp.sqrt(jnp.where(is_real, 1.0, vector_norm_sq))
         safe_scalar_part = jnp.where(scalar_part == 0, 1.0, scalar_part)
-        # θ/‖v‖ tends to 1/s when ‖v‖ → 0 (s > 0)
+        # θ/|v| tends to 1/s when |v| → 0 (s > 0)
         theta_over_vector_norm = jnp.where(
             is_real,
             1 / safe_scalar_part,
@@ -487,7 +487,7 @@ class Quaternion:
         """Compute quaternion exponential.
 
         For a quaternion q = s + v, the exponential is:
-        exp(q) = exp(s) * (cos(‖v‖) + sin(‖v‖) * v/‖v‖)
+        exp(q) = exp(s) * (cos(|v|) + sin(|v|) * v/|v|)
 
         Returns:
             The exponential of the quaternion
@@ -497,11 +497,11 @@ class Quaternion:
         vector_norm_sq = jnp.sum(vector_part**2, axis=-1)
         is_real = vector_norm_sq == 0
 
-        # The where guard keeps the gradients finite for real quaternions (‖v‖ = 0).
+        # The where guard keeps the gradients finite for real quaternions (|v| = 0).
         vector_norm = jnp.where(is_real, 0.0, jnp.sqrt(jnp.where(is_real, 1.0, vector_norm_sq)))
         exp_scalar = jnp.exp(scalar_part)
-        # sin(‖v‖)/‖v‖ and cos(‖v‖) = 1 - ‖v‖²/2 (sin(‖v‖/2)/(‖v‖/2))², written with sinc
-        # so that the first and second derivatives are exact at ‖v‖ = 0
+        # sin(|v|)/|v| and cos(|v|) = 1 - |v|²/2 (sin(|v|/2)/(|v|/2))², written with sinc
+        # so that the first and second derivatives are exact at |v| = 0
         sinc_vnorm = jnp.sinc(vector_norm / jnp.pi)
         sinc_half_vnorm = jnp.sinc(vector_norm / (2 * jnp.pi))
         cos_vnorm = 1 - 0.5 * vector_norm_sq * sinc_half_vnorm**2
