@@ -455,34 +455,31 @@ class Quaternion:
     def log(self) -> Self:
         """Compute quaternion logarithm.
 
-        For a quaternion q = ‖q‖ * (cos(θ) + sin(θ)v), the logarithm is:
-        log(q) = log(‖q‖) + θ * v
+        For a quaternion q = |q| * (cos(θ) + sin(θ)v), the logarithm is:
+        log(q) = log(|q|) + θ * v
 
         For the zero quaternion, returns (-inf, 0, 0, 0).
 
         Returns:
             The logarithm of the quaternion
         """
-        q_norm = abs(self)
+        scalar_part = self.w
+        vector_part = self.vector
+        vector_norm_sq = jnp.sum(vector_part**2, axis=-1)
+        is_real = vector_norm_sq == 0
 
-        # Normalize manually to handle zero quaternion (returns 0 instead of NaN)
-        safe_norm = jnp.where(q_norm == 0, 1.0, q_norm)
-        unit_wxyz = self.wxyz / jnp.expand_dims(safe_norm, axis=-1)
-
-        # For unit quaternion q = cos(θ) + sin(θ)v, compute θ and v
-        # θ = arccos(w) and v = vector/|vector|
-        unit_w = unit_wxyz[..., 0]
-        unit_vector = unit_wxyz[..., 1:]
-        theta = jnp.arccos(jnp.clip(unit_w, -1.0, 1.0))
-        vector_norm = jnp.linalg.norm(unit_vector, axis=-1)
-
-        # Handle case where vector is zero (real quaternion)
-        inv_vector_norm = jnp.where(vector_norm == 0, 0.0, 1 / vector_norm)
-        unit_vector = unit_vector * inv_vector_norm[..., None]
-
-        # log(q) = log(|q|) + θ * v
-        log_norm = jnp.log(q_norm)
-        log_q_vector = theta[..., None] * unit_vector
+        # log(q) = log(|q|) + θ * v/|v|, with θ = atan2(|v|, s).
+        # The where guards keep the gradients finite for real quaternions (|v| = 0).
+        log_norm = 0.5 * jnp.log(scalar_part**2 + vector_norm_sq)
+        safe_vector_norm = jnp.sqrt(jnp.where(is_real, 1.0, vector_norm_sq))
+        safe_scalar_part = jnp.where(scalar_part == 0, 1.0, scalar_part)
+        # θ/|v| tends to 1/s when |v| → 0 (s > 0)
+        theta_over_vector_norm = jnp.where(
+            is_real,
+            1 / safe_scalar_part,
+            jnp.arctan2(safe_vector_norm, scalar_part) / safe_vector_norm,
+        )
+        log_q_vector = theta_over_vector_norm[..., None] * vector_part
 
         return Quaternion.from_scalar_vector(log_norm, log_q_vector)
 
@@ -490,26 +487,27 @@ class Quaternion:
         """Compute quaternion exponential.
 
         For a quaternion q = s + v, the exponential is:
-        exp(q) = exp(s) * (cos(‖v‖) + sin(‖v‖) * v/‖v‖)
+        exp(q) = exp(s) * (cos(|v|) + sin(|v|) * v/|v|)
 
         Returns:
             The exponential of the quaternion
         """
         scalar_part = self.w
         vector_part = self.vector
-        vector_norm = jnp.linalg.norm(vector_part, axis=-1)
+        vector_norm_sq = jnp.sum(vector_part**2, axis=-1)
+        is_real = vector_norm_sq == 0
 
-        # exp(s + v) = exp(s) * (cos(|v|) + sin(|v|) * v/|v|)
+        # The where guard keeps the gradients finite for real quaternions (|v| = 0).
+        vector_norm = jnp.where(is_real, 0.0, jnp.sqrt(jnp.where(is_real, 1.0, vector_norm_sq)))
         exp_scalar = jnp.exp(scalar_part)
-        cos_vnorm = jnp.cos(vector_norm)
-        sin_vnorm = jnp.sin(vector_norm)
-
-        # Handle case where |v| = 0 (real quaternion)
-        inv_vector_norm = jnp.where(vector_norm == 0, 0.0, 1 / vector_norm)
-        unit_v = vector_part * jnp.expand_dims(inv_vector_norm, -1)
+        # sin(|v|)/|v| and cos(|v|) = 1 - |v|²/2 (sin(|v|/2)/(|v|/2))², written with sinc
+        # so that the first and second derivatives are exact at |v| = 0
+        sinc_vnorm = jnp.sinc(vector_norm / jnp.pi)
+        sinc_half_vnorm = jnp.sinc(vector_norm / (2 * jnp.pi))
+        cos_vnorm = 1 - 0.5 * vector_norm_sq * sinc_half_vnorm**2
 
         result_w = exp_scalar * cos_vnorm
-        result_vector = exp_scalar * jnp.expand_dims(sin_vnorm, -1) * unit_v
+        result_vector = jnp.expand_dims(exp_scalar * sinc_vnorm, -1) * vector_part
 
         return Quaternion.from_scalar_vector(result_w, result_vector)
 
