@@ -85,5 +85,14 @@ select = [
 [tool.ruff.format]
 quote-style = 'single'
 
+[tool.ty.rules]
+dynamic-function-decorator-return = "error"
+missing-type-argument = "error"
+possibly-unresolved-reference = "warn"
+unused-ignore-comment = "error"
+
+[tool.ty.src]
+include = ["src"]
+
 [tool.uv]
 cache-keys = [{ git = true }]

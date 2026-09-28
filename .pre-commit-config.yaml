@@ -37,15 +37,7 @@ repos:
     name: notebook stripping
     args: [--extra-keys=metadata.language_info.version]
 
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v2.3.1'
+- repo: https://github.com/astral-sh/ty-pre-commit
+  rev: v0.0.84
   hooks:
-  - id: mypy
-    additional_dependencies:
-    - jax
-    args:
-    - --strict
-    - --show-error-codes
-    - --enable-error-code=ignore-without-code
-    - --allow-untyped-calls
-    files: ^fastquat/
+  - id: ty
