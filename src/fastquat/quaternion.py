@@ -193,7 +193,7 @@ class Quaternion:
 
     @classmethod
     def random(
-        cls, key: jax.random.PRNGKey, shape: tuple[int, ...] = (), dtype: DTypeLike | None = None
+        cls, key: Array, shape: tuple[int, ...] = (), dtype: DTypeLike | None = None
     ) -> Self:
         """Generate normalized random quaternions.
 
@@ -206,7 +206,7 @@ class Quaternion:
             Normalized Quaternion.
         """
         data = jax.random.normal(key, shape + (4,), dtype=dtype)
-        return Quaternion.from_array(data).normalize()
+        return cls.from_array(data).normalize()
 
     @property
     def w(self) -> Array:
@@ -240,13 +240,13 @@ class Quaternion:
         returns the quaternion [NaN, NaN, NaN, NaN].
         """
         norm = abs(self)
-        return Quaternion.from_array(self.wxyz / jnp.expand_dims(norm, axis=-1))
+        return self.from_array(self.wxyz / jnp.expand_dims(norm, axis=-1))
 
     def _inverse(self) -> Self:
         """Quaternion inverse (private method - use 1/q instead)."""
         conj = self.conj()
         norm_sq = jnp.sum(self.wxyz**2, axis=-1)
-        return Quaternion.from_array(conj.wxyz / jnp.expand_dims(norm_sq, axis=-1))
+        return self.from_array(conj.wxyz / jnp.expand_dims(norm_sq, axis=-1))
 
     def to_components(self) -> tuple[Array, Array, Array, Array]:
         return self.w, self.x, self.y, self.z
@@ -316,13 +316,13 @@ class Quaternion:
         if self.ndim == 0:
             raise TypeError('iteration over a 0-d quaternion')
         for i in range(self.shape[0]):
-            yield Quaternion.from_array(self.wxyz[i])
+            yield self.from_array(self.wxyz[i])
 
     def __getitem__(self, idx: Any) -> Self:
         """Index or slice the tensor of quaternions."""
         if not isinstance(idx, tuple):
             idx = (idx,)
-        return Quaternion.from_array(self.wxyz[(*idx, slice(None))])
+        return self.from_array(self.wxyz[(*idx, slice(None))])
 
     def __pos__(self) -> Self:
         """Quaternion positive."""
@@ -330,12 +330,12 @@ class Quaternion:
 
     def __neg__(self) -> Self:
         """Quaternion negation."""
-        return Quaternion.from_array(-self.wxyz)
+        return self.from_array(-self.wxyz)
 
     def __add__(self, other: Any) -> Self:
         """Quaternion addition."""
         if isinstance(other, Quaternion):
-            return Quaternion.from_array(self.wxyz + other.wxyz)
+            return self.from_array(self.wxyz + other.wxyz)
 
         try:
             other = jnp.asarray(other)
@@ -345,7 +345,7 @@ class Quaternion:
         if jnp.iscomplexobj(other):
             raise NotImplementedError('Quaternion and complex addition is not implemented.')
 
-        return Quaternion.from_scalar_vector(self.w + other, self.vector)
+        return self.from_scalar_vector(self.w + other, self.vector)
 
     def __radd__(self, other: Any) -> Self:
         """Quaternion addition."""
@@ -354,7 +354,7 @@ class Quaternion:
     def __sub__(self, other: Any) -> Self:
         """Quaternion subtraction."""
         if isinstance(other, Quaternion):
-            return Quaternion.from_array(self.wxyz - other.wxyz)
+            return self.from_array(self.wxyz - other.wxyz)
 
         try:
             other = jnp.asarray(other)
@@ -364,7 +364,7 @@ class Quaternion:
         if jnp.iscomplexobj(other):
             raise NotImplementedError('Quaternion and complex subtraction is not implemented.')
 
-        return Quaternion.from_scalar_vector(self.w - other, self.vector)
+        return self.from_scalar_vector(self.w - other, self.vector)
 
     def __rsub__(self, other: Any) -> Self:
         """Quaternion subtraction."""
@@ -376,7 +376,7 @@ class Quaternion:
         if jnp.iscomplexobj(other):
             raise NotImplementedError('Quaternion and complex subtraction is not implemented.')
 
-        return Quaternion.from_scalar_vector(other - self.w, -self.vector)
+        return self.from_scalar_vector(other - self.w, -self.vector)
 
     def __mul__(self, other: Any) -> Self:
         """Quaternion multiplication."""
@@ -389,7 +389,7 @@ class Quaternion:
             y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
             z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
 
-            return Quaternion(w, x, y, z)
+            return self.from_array(jnp.stack([w, x, y, z], axis=-1))
 
         try:
             other = jnp.asarray(other)
@@ -399,7 +399,7 @@ class Quaternion:
         if jnp.iscomplexobj(other):
             raise NotImplementedError('Quaternion and complex multiplication is not implemented.')
 
-        return Quaternion.from_array(self.wxyz * jnp.expand_dims(other, axis=-1))
+        return self.from_array(self.wxyz * jnp.expand_dims(other, axis=-1))
 
     def __rmul__(self, other: Any) -> Self:
         """Quaternion multiplication."""
@@ -411,7 +411,7 @@ class Quaternion:
         if jnp.iscomplexobj(other):
             raise NotImplementedError('Quaternion and complex multiplication is not implemented.')
 
-        return Quaternion.from_array(jnp.expand_dims(other, axis=-1) * self.wxyz)
+        return self.from_array(jnp.expand_dims(other, axis=-1) * self.wxyz)
 
     def __truediv__(self, other: Any) -> Self:
         """Quaternion division."""
@@ -426,7 +426,7 @@ class Quaternion:
         if jnp.iscomplexobj(other):
             raise NotImplementedError('Quaternion and complex division is not implemented.')
 
-        return Quaternion.from_array(self.wxyz / jnp.expand_dims(other, axis=-1))
+        return self.from_array(self.wxyz / jnp.expand_dims(other, axis=-1))
 
     def __rtruediv__(self, other: Any) -> Self:
         """Quaternion division."""
@@ -463,7 +463,7 @@ class Quaternion:
             elif exponent == -1:
                 return self._inverse()
             elif exponent == 0:
-                return Quaternion.ones(self.shape, self.dtype)
+                return self.ones(self.shape, self.dtype)
             elif exponent == 1:
                 return self
             elif exponent == 2:
@@ -471,8 +471,9 @@ class Quaternion:
             return (exponent * self.log()).exp()
 
         # General case: q^n = exp(n * log(q))
+        exponent = jnp.asarray(exponent)
         result = (exponent * self.log()).exp().wxyz
-        return Quaternion.from_array(
+        return self.from_array(
             jnp.where(
                 exponent[..., None] == 0, jnp.array([1.0, 0.0, 0.0, 0.0], dtype=self.dtype), result
             )
@@ -507,7 +508,7 @@ class Quaternion:
         )
         log_q_vector = theta_over_vector_norm[..., None] * vector_part
 
-        return Quaternion.from_scalar_vector(log_norm, log_q_vector)
+        return self.from_scalar_vector(log_norm, log_q_vector)
 
     def exp(self) -> Self:
         """Compute quaternion exponential.
@@ -535,7 +536,7 @@ class Quaternion:
         result_w = exp_scalar * cos_vnorm
         result_vector = jnp.expand_dims(exp_scalar * sinc_vnorm, -1) * vector_part
 
-        return Quaternion.from_scalar_vector(result_w, result_vector)
+        return self.from_scalar_vector(result_w, result_vector)
 
     @property
     def nbytes(self) -> int:
@@ -588,12 +589,12 @@ class Quaternion:
 
     def squeeze(self, axis=None) -> Self:
         """Supprime les dimensions de taille 1"""
-        return Quaternion.from_array(jnp.squeeze(self.wxyz, axis=axis))
+        return self.from_array(jnp.squeeze(self.wxyz, axis=axis))
 
     def conjugate(self) -> Self:
         """Quaternion conjugate."""
         sign = jnp.array([1, -1, -1, -1])
-        return Quaternion.from_array(self.wxyz * sign)
+        return self.from_array(self.wxyz * sign)
 
     def conj(self) -> Self:
         """Quaternion conjugate."""
@@ -641,7 +642,7 @@ class Quaternion:
 
         # Linear interpolation case
         result_linear = q1.wxyz + jnp.expand_dims(t * (1 - t), -1) * (q2_corrected - q1.wxyz)
-        result_linear = Quaternion.from_array(result_linear).normalize()
+        result_linear = self.from_array(result_linear).normalize()
 
         # Spherical interpolation case
         theta = jnp.arccos(jnp.clip(dot, 0.0, 1.0))
@@ -656,9 +657,9 @@ class Quaternion:
         result_slerp = (
             jnp.expand_dims(factor1, -1) * q1.wxyz + jnp.expand_dims(factor2, -1) * q2_corrected
         )
-        result_slerp = Quaternion.from_array(result_slerp)
+        result_slerp = self.from_array(result_slerp)
 
         # Choose between linear and spherical interpolation
         result = jnp.where(jnp.expand_dims(use_linear, -1), result_linear.wxyz, result_slerp.wxyz)
 
-        return Quaternion.from_array(result)
+        return self.from_array(result)

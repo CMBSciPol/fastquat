@@ -52,12 +52,12 @@ from fastquat import Quaternion
 
 # Create a simple quaternion
 q = Quaternion(1.0)
-print(f"Identity quaternion: {q}")
+print(f'Identity quaternion: {q}')
 
 # Test SLERP functionality
 q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)
 interpolated = q.slerp(q2, 0.5)
-print(f"SLERP result: {interpolated}")
+print(f'SLERP result: {interpolated}')
 ```
 
 If this runs without errors, FastQuat is properly installed!
