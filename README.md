@@ -101,10 +101,12 @@ from fastquat import Quaternion
 key = jax.random.PRNGKey(42)
 q_batch = Quaternion.random(key, shape=(1000,))
 
+
 # JIT-compiled batch operations
 @jax.jit
 def batch_rotate(quaternions, vectors):
     return quaternions.rotate_vector(vectors)
+
 
 vectors = jax.random.normal(key, (1000, 3))
 rotated_batch = batch_rotate(q_batch, vectors)

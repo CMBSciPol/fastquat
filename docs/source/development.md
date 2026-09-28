@@ -112,20 +112,21 @@ from jax.typing import ArrayLike
 
 
 class Quaternion:
-   ...
-   def new_method(self, parameter: ArrayLike) -> Self:
-       """Brief description of what the method does.
+    ...
 
-       Args:
-           parameter: Description of the parameter
+    def new_method(self, parameter: ArrayLike) -> Self:
+        """Brief description of what the method does.
 
-       Returns:
-           Description of the return value
-       """
-       # Implementation using JAX operations
-       parameter = jnp.asarray(parameter)
-       result = jnp.some_operation(self.wxyz, parameter)
-       return Quaternion.from_array(result)
+        Args:
+            parameter: Description of the parameter
+
+        Returns:
+            Description of the return value
+        """
+        # Implementation using JAX operations
+        parameter = jnp.asarray(parameter)
+        result = jnp.some_operation(self.wxyz, parameter)
+        return Quaternion.from_array(result)
 ```
 
 Then add tests:
@@ -138,15 +139,11 @@ import pytest
 from fastquat import Quaternion
 
 
-@pytest.mark.parametrize(
-   'parameter, expected_values',
-   [
-      (..., ...),
-   ]
-)
+@pytest.mark.parametrize('parameter, expected_values', [(..., ...)])
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_new_method(parameter, expected_values, do_jit):
     """Test the new method."""
+
     def test_fn(q_, parameter_):
         return q_.new_method(parameter_)
 

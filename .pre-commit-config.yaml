@@ -7,9 +7,9 @@ repos:
     - --all
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.14.7"
+  rev: "v0.16.9"
   hooks:
-    - id: ruff
+    - id: ruff-check
       name: ruff linting
     - id: ruff-format
       name: ruff formatting
@@ -31,14 +31,14 @@ repos:
   - id: check-merge-conflict
 
 - repo: https://github.com/kynan/nbstripout
-  rev: 0.6.1
+  rev: "0.9.1"
   hooks:
   - id: nbstripout
     name: notebook stripping
     args: [--extra-keys=metadata.language_info.version]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.19.0'
+  rev: 'v2.3.1'
   hooks:
   - id: mypy
     additional_dependencies:
