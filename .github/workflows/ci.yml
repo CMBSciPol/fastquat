@@ -1,15 +1,16 @@
 name: CI
 
+permissions: {}
+
 on:
   push:
     branches:
     - main
   pull_request:
-    branches:
-    - main
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -17,41 +18,45 @@ jobs:
   pre-commit:
     name: Pre-commit
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - uses: actions/checkout@v7.0.1
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.0.1
       with:
-        python-version: '3.x'
+        version: '0.12.18'
+    - name: Cache prek
+      uses: actions/cache@v6.1.0
+      with:
+        path: ~/.cache/prek
+        key: prek-${{ hashFiles('.pre-commit-config.yaml') }}
+        restore-keys: |
+          prek-
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install pre-commit
+      run: uv sync --locked --only-group lint
     - name: Run pre-commit
-      run: pre-commit run --all-files --show-diff-on-failure --color=always
+      run: uv run --no-sync prek run --all-files --show-diff-on-failure --color always
 
   test:
     name: Run tests on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.0.1
         with:
-          enable-cache: true
+          version: '0.12.18'
+          python-version: ${{ matrix.python-version }}
 
       - name: Build wheel
         run: uv build --wheel
@@ -62,6 +67,4 @@ jobs:
           uv pip install dist/fastquat-*.whl
 
       - name: Run tests
-        run: |
-          source .venv/bin/activate
-          pytest -v
+        run: uv run --no-sync pytest -v

@@ -34,6 +34,7 @@ repository = 'https://github.com/CMBSciPol/fastquat'
 [dependency-groups]
 dev = [
     {include-group = 'docs'},
+    {include-group = 'lint'},
     'pytest>=9.0',
     'pytest-notebook>=0.10',
     'visu-hlo',
@@ -48,6 +49,7 @@ docs = [
     'numpy>=1.24.0',
     'pillow>=9.0.0',
 ]
+lint = ['prek>=0.5.4']
 cuda12 = ['jax[cuda12]>=0.4']
 cuda13 = ['jax[cuda13]>=0.7; python_version>="3.11"']
 
