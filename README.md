@@ -66,7 +66,7 @@ interpolated = q1.slerp(q2, t=0.5)  # Halfway between q1 and q2
 ### Core Operations
 - **Quaternion arithmetic**: Addition, multiplication, conjugation, inverse, power, exponentiation, logarithm
 - **Normalization**: Efficient unit quaternion computation
-- **Conversion**: To/from rotation matrices, Euler angles
+- **Conversion**: To/from rotation matrices, axis-angle, Euler angles
 - **Vector rotation**: Direct vector transformation
 
 ### Advanced Interpolation

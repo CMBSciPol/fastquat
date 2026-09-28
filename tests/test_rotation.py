@@ -79,6 +79,80 @@ def test_from_rotation_matrix_wrong_shape(do_jit):
         func(wrong_matrix)
 
 
+# from_axis_angle
+@pytest.mark.parametrize(
+    'axis, angle, expected',
+    [
+        ([0.0, 0.0, 1.0], 0.0, [1.0, 0.0, 0.0, 0.0]),
+        ([1.0, 0.0, 0.0], jnp.pi, [0.0, 1.0, 0.0, 0.0]),
+        ([0.0, 2.0, 0.0], jnp.pi / 2, [jnp.sqrt(0.5), 0.0, jnp.sqrt(0.5), 0.0]),
+        ([0.0, 0.0, 1.0], -jnp.pi / 2, [jnp.sqrt(0.5), 0.0, 0.0, -jnp.sqrt(0.5)]),
+    ],
+)
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_from_axis_angle(axis, angle, expected, do_jit):
+    """Test from_axis_angle against known quaternions (axis need not be normalized)."""
+    func = Quaternion.from_axis_angle
+    if do_jit:
+        func = jax.jit(func)
+
+    q = func(jnp.array(axis), jnp.array(angle))
+    assert jnp.allclose(q.wxyz, jnp.array(expected), atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_from_axis_angle_right_hand_rule(do_jit):
+    """A positive rotation about z maps x to y."""
+
+    def func(angle):
+        return Quaternion.from_axis_angle(jnp.array([0.0, 0.0, 1.0]), angle).rotate_vector(
+            jnp.array([1.0, 0.0, 0.0])
+        )
+
+    if do_jit:
+        func = jax.jit(func)
+
+    assert jnp.allclose(func(jnp.pi / 2), jnp.array([0.0, 1.0, 0.0]), atol=1e-6)
+
+
+def test_from_axis_angle_consistency_with_matrix():
+    """The rotation matrix of from_axis_angle is Rodrigues' formula."""
+    axis = jnp.array([1.0, -2.0, 0.5])
+    angle = 0.7
+    n = axis / jnp.linalg.norm(axis)
+    k = jnp.array([[0, -n[2], n[1]], [n[2], 0, -n[0]], [-n[1], n[0], 0]])
+    expected = jnp.eye(3) + jnp.sin(angle) * k + (1 - jnp.cos(angle)) * k @ k
+
+    q = Quaternion.from_axis_angle(axis, angle)
+    assert jnp.allclose(q.to_rotation_matrix(), expected, atol=1e-6)
+
+
+def test_from_axis_angle_broadcast():
+    """Axes and angles broadcast against each other."""
+    axes = jnp.eye(3)  # (3, 3)
+    angles = jnp.array([[0.1], [0.2]])  # (2, 1)
+    q = Quaternion.from_axis_angle(axes, angles)
+    assert q.shape == (2, 3)
+    assert jnp.allclose(abs(q), 1.0, atol=1e-6)
+    expected = Quaternion.from_axis_angle(axes[2], angles[1, 0])
+    assert jnp.allclose(q[1, 2].wxyz, expected.wxyz, atol=1e-6)
+
+
+def test_from_axis_angle_grad_at_zero():
+    """The derivative with respect to the angle is finite and exact at zero."""
+
+    def func(angle):
+        return Quaternion.from_axis_angle(jnp.array([0.0, 1.0, 0.0]), angle).wxyz
+
+    jac = jax.jacfwd(func)(0.0)
+    assert jnp.allclose(jac, jnp.array([0.0, 0.0, 0.5, 0.0]))
+
+
+def test_from_axis_angle_wrong_shape():
+    with pytest.raises(ValueError, match='Axis must have shape'):
+        Quaternion.from_axis_angle(jnp.array([1.0, 0.0]), 0.1)
+
+
 # to_rotation_matrix
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_to_rotation_matrix_identity(do_jit):

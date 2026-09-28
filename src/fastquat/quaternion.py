@@ -119,6 +119,32 @@ class Quaternion:
         return cls.from_array(jnp.stack([w, x, y, z], axis=-1))
 
     @classmethod
+    def from_axis_angle(cls, axis: ArrayLike, angle: ArrayLike) -> Self:
+        """Create the unit quaternion of a rotation about an axis.
+
+        The rotation follows the right-hand rule: a positive angle rotates counterclockwise when
+        looking from the tip of the axis towards the origin.
+
+        Args:
+            axis: Array of shape (..., 3) for the rotation axis. It does not need to be normalized.
+            angle: Array of shape (...) for the rotation angle, in radians.
+
+        Returns:
+            Quaternion of shape broadcast(axis.shape[:-1], angle.shape).
+        """
+        axis = jnp.asarray(axis)
+        angle = jnp.asarray(angle)
+        if axis.shape[-1:] != (3,):
+            raise ValueError(f'Axis must have shape (..., 3), got {axis.shape}')
+        dtype = jnp.result_type(axis, angle, float)
+        unit_axis = axis / jnp.linalg.norm(axis, axis=-1, keepdims=True)
+        half_angle = 0.5 * angle.astype(dtype)
+        scalar = jnp.cos(half_angle)
+        vector = jnp.sin(half_angle)[..., None] * unit_axis.astype(dtype)
+        scalar, vector = jnp.broadcast_arrays(scalar[..., None], vector)
+        return cls.from_scalar_vector(scalar[..., 0], vector)
+
+    @classmethod
     def zeros(cls, shape: tuple[int, ...], dtype: DTypeLike | None = None) -> Self:
         """Create quaternions with all components set to 0.
 
