@@ -40,6 +40,7 @@ q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 | Conjugate | `q.conj()` | Quaternion conjugate |
 | Rotation | `q.rotate_vector(v)` | Rotate 3D vector |
 | Axis-angle | `Quaternion.from_axis_angle(axis, angle)` | Rotation about an axis |
+| Rotation vector | `Quaternion.from_rotation_vector(rotvec)`, `q.to_rotation_vector()` | Axis scaled by angle |
 | SLERP | `q1.slerp(q2, t)` | Spherical interpolation |
 | Log | `q.log()` | Quaternion logarithm |
 | Exp | `q.exp()` | Quaternion exponential |
