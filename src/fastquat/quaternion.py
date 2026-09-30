@@ -126,7 +126,8 @@ class Quaternion:
         looking from the tip of the axis towards the origin.
 
         Args:
-            axis: Array of shape (..., 3) for the rotation axis. It does not need to be normalized.
+            axis: Array of shape (..., 3) for the rotation axis. It does not need to be normalized,
+                but must be non-zero. Use `from_rotation_vector` for rotations that can be zero.
             angle: Array of shape (...) for the rotation angle, in radians.
 
         Returns:
@@ -143,6 +144,28 @@ class Quaternion:
         vector = jnp.sin(half_angle)[..., None] * unit_axis.astype(dtype)
         scalar, vector = jnp.broadcast_arrays(scalar[..., None], vector)
         return cls.from_scalar_vector(scalar[..., 0], vector)
+
+    @classmethod
+    def from_rotation_vector(cls, rotvec: ArrayLike) -> Self:
+        """Create the unit quaternion of a rotation vector.
+
+        The rotation vector is the rotation axis scaled by the rotation angle in radians. The
+        rotation follows the right-hand rule, as in `from_axis_angle`. The zero vector gives the
+        identity, with exact derivatives.
+
+        Args:
+            rotvec: Array of shape (..., 3) for the rotation vectors.
+
+        Returns:
+            Quaternion of shape rotvec.shape[:-1].
+        """
+        rotvec = jnp.asarray(rotvec)
+        if rotvec.shape[-1:] != (3,):
+            raise ValueError(f'Rotation vector must have shape (..., 3), got {rotvec.shape}')
+        rotvec = rotvec.astype(jnp.result_type(rotvec, float))
+        # q = exp(rotvec / 2), whose implementation is safe at the zero vector
+        half_rotvec = 0.5 * rotvec
+        return cls.from_scalar_vector(jnp.zeros_like(half_rotvec[..., 0]), half_rotvec).exp()
 
     @classmethod
     def zeros(cls, shape: tuple[int, ...], dtype: DTypeLike | None = None) -> Self:
@@ -276,6 +299,22 @@ class Quaternion:
         )
 
         return rot
+
+    def to_rotation_vector(self) -> Array:
+        """Convert quaternion to rotation vector.
+
+        The rotation vector is the rotation axis scaled by the rotation angle in radians, with the
+        angle in [0, π]. q and -q give the same vector, except for rotations by π, where either of
+        the two opposite vectors may be returned. The rotation vector is discontinuous there.
+        Non-unit quaternions are treated as their normalized counterpart.
+
+        Returns:
+            Array of shape (..., 3)
+        """
+        # q and -q are the same rotation: pick the one with w >= 0 so that the angle is in [0, π]
+        sign = jnp.where(self.w < 0, -1, 1).astype(self.dtype)
+        # rotvec = 2 log(q), whose vector part does not depend on |q| and is safe at the identity
+        return 2 * (sign * self).log().vector
 
     def rotate_vector(self, v: ArrayLike) -> Array:
         """Apply quaternion rotation to a vector.

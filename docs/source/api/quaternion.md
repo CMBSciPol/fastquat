@@ -19,6 +19,7 @@ compilation, automatic differentiation, and vectorization.
 .. automethod:: fastquat.Quaternion.from_scalar_vector
 .. automethod:: fastquat.Quaternion.from_rotation_matrix
 .. automethod:: fastquat.Quaternion.from_axis_angle
+.. automethod:: fastquat.Quaternion.from_rotation_vector
 .. automethod:: fastquat.Quaternion.zeros
 .. automethod:: fastquat.Quaternion.ones
 .. automethod:: fastquat.Quaternion.full
@@ -51,6 +52,7 @@ compilation, automatic differentiation, and vectorization.
 
 ```{eval-rst}
 .. automethod:: fastquat.Quaternion.to_rotation_matrix
+.. automethod:: fastquat.Quaternion.to_rotation_vector
 .. automethod:: fastquat.Quaternion.rotate_vector
 ```
 
