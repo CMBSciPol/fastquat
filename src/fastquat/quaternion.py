@@ -126,7 +126,8 @@ class Quaternion:
         looking from the tip of the axis towards the origin.
 
         Args:
-            axis: Array of shape (..., 3) for the rotation axis. It does not need to be normalized.
+            axis: Array of shape (..., 3) for the rotation axis. It does not need to be normalized,
+                but must be non-zero. Use `from_rotation_vector` for rotations that can be zero.
             angle: Array of shape (...) for the rotation angle, in radians.
 
         Returns:
@@ -303,7 +304,8 @@ class Quaternion:
         """Convert quaternion to rotation vector.
 
         The rotation vector is the rotation axis scaled by the rotation angle in radians, with the
-        angle in [0, π]. Since q and -q represent the same rotation, both give the same vector.
+        angle in [0, π]. q and -q give the same vector, except for rotations by π, where either of
+        the two opposite vectors may be returned. The rotation vector is discontinuous there.
         Non-unit quaternions are treated as their normalized counterpart.
 
         Returns:

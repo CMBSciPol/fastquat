@@ -243,10 +243,30 @@ def test_to_rotation_vector_roundtrip():
     q = Quaternion.random(key, (100,))
     rotvec = q.to_rotation_vector()
     assert rotvec.shape == (100, 3)
-    assert jnp.all(jnp.linalg.norm(rotvec, axis=-1) <= jnp.pi + 1e-6)
+    angle = jnp.linalg.norm(rotvec, axis=-1)
+    assert jnp.all(angle <= jnp.pi + 1e-6)
     q2 = Quaternion.from_rotation_vector(rotvec)
     assert jnp.allclose(q2.to_rotation_matrix(), q.to_rotation_matrix(), atol=1e-5)
-    assert jnp.allclose(q2.to_rotation_vector(), rotvec, atol=1e-5)
+    # Near π, rounding can flip the sign of w and return the opposite vector
+    away_from_pi = (angle < jnp.pi - 1e-3)[:, None]
+    assert jnp.allclose(
+        jnp.where(away_from_pi, q2.to_rotation_vector(), 0),
+        jnp.where(away_from_pi, rotvec, 0),
+        atol=1e-5,
+    )
+
+
+def test_to_rotation_vector_at_pi():
+    """At angle π, q and -q may give opposite vectors, but of norm π and for the same rotation."""
+    q = Quaternion(0.0, 0.0, 1.0, 0.0)
+    rotvec, rotvec_neg = q.to_rotation_vector(), (-q).to_rotation_vector()
+    assert jnp.allclose(jnp.linalg.norm(rotvec), jnp.pi)
+    assert jnp.allclose(jnp.linalg.norm(rotvec_neg), jnp.pi)
+    assert jnp.allclose(
+        Quaternion.from_rotation_vector(rotvec).to_rotation_matrix(),
+        Quaternion.from_rotation_vector(rotvec_neg).to_rotation_matrix(),
+        atol=1e-6,
+    )
 
 
 def test_to_rotation_vector_grad_at_identity():
