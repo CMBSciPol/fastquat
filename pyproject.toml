@@ -15,16 +15,14 @@ classifiers = [
     'Topic :: Scientific/Engineering :: Astronomy',
     'Topic :: Scientific/Engineering :: Mathematics',
     'Topic :: Scientific/Engineering :: Physics',
-    'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
 ]
-requires-python = '>=3.10'
+requires-python = '>=3.11'
 dependencies = [
-    'jax>=0.4.0',
-    'typing-extensions; python_version < "3.11"',
+    'jax>=0.7.0',
 ]
 
 [project.urls]
@@ -50,8 +48,8 @@ docs = [
     'pillow>=9.0.0',
 ]
 lint = ['prek>=0.5.4']
-cuda12 = ['jax[cuda12]>=0.4']
-cuda13 = ['jax[cuda13]>=0.7; python_version>="3.11"']
+cuda12 = ['jax[cuda12]>=0.7.0']
+cuda13 = ['jax[cuda13]>=0.7.0']
 
 [tool.hatch.version]
 source = 'vcs'

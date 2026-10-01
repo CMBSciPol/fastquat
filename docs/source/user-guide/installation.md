@@ -4,8 +4,8 @@
 
 FastQuat requires:
 
-* Python 3.10 or later
-* JAX 0.4.0 or later
+* Python 3.11 or later
+* JAX 0.7.0 or later
 
 ## Installing from PyPI
 
