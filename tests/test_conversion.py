@@ -1,8 +1,11 @@
 """Rotation conversion tests for Quaternion class.
 
-Tests for the conversions to and from rotation matrices, axis-angle, rotation vectors, and
-jax.scipy Rotation.
+Tests for the conversions to and from rotation matrices, axis-angle, rotation vectors, Euler
+angles, and jax.scipy Rotation.
 """
+
+import itertools
+from functools import partial
 
 import jax
 import jax.numpy as jnp
@@ -10,6 +13,22 @@ import pytest
 from jax.scipy.spatial.transform import Rotation
 
 from fastquat.quaternion import Quaternion
+
+EXTRINSIC_SEQS = [
+    ''.join(axes)
+    for axes in itertools.product('xyz', repeat=3)
+    if axes[0] != axes[1] and axes[1] != axes[2]
+]
+SEQS = EXTRINSIC_SEQS + [seq.upper() for seq in EXTRINSIC_SEQS]
+
+
+def angle_diff(a, b):
+    """Absolute difference of angles, modulo 2π."""
+    return jnp.abs((a - b + jnp.pi) % (2 * jnp.pi) - jnp.pi)
+
+
+def is_proper(seq: str) -> bool:
+    return seq[0] == seq[2]
 
 
 # from_rotation_matrix
@@ -380,6 +399,141 @@ def test_to_rotation_vector_grad_at_identity():
     expected = jnp.concatenate([jnp.zeros((3, 1)), 2 * jnp.eye(3)], axis=1)
     assert jnp.allclose(jax.jacfwd(func)(wxyz), expected)
     assert jnp.allclose(jax.jacrev(func)(wxyz), expected)
+
+
+# from_euler
+@pytest.mark.parametrize('seq', SEQS)
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_from_euler(seq, do_jit):
+    """from_euler gives the same rotations as scipy."""
+    func = partial(Quaternion.from_euler, seq)
+    if do_jit:
+        func = jax.jit(func)
+
+    angles = jax.random.uniform(jax.random.key(0), (50, 3), minval=-jnp.pi, maxval=jnp.pi)
+    q = func(angles)
+    assert q.shape == (50,)
+    assert jnp.allclose(abs(q), 1.0, atol=1e-6)
+    expected = Rotation.from_euler(seq, angles).as_matrix()
+    assert jnp.allclose(q.to_rotation_matrix(), expected, atol=1e-5)
+
+
+@pytest.mark.parametrize('seq', ['x', 'Y', 'zx', 'XZ'])
+def test_from_euler_short_sequences(seq):
+    """Sequences of 1 or 2 axes are supported."""
+    angles = jnp.array([0.3, -1.2])[: len(seq)]
+    q = Quaternion.from_euler(seq, angles)
+    expected = Rotation.from_euler(seq, angles).as_matrix()
+    assert jnp.allclose(q.to_rotation_matrix(), expected, atol=1e-6)
+
+
+def test_from_euler_single_axis():
+    """A single axis rotation is the corresponding axis-angle rotation."""
+    q = Quaternion.from_euler('z', jnp.array([jnp.pi / 2]))
+    expected = Quaternion.from_axis_angle(jnp.array([0.0, 0.0, 1.0]), jnp.pi / 2)
+    assert jnp.allclose(q.wxyz, expected.wxyz, atol=1e-6)
+
+
+def test_from_euler_intrinsic_is_reversed_extrinsic():
+    """An intrinsic sequence is the reversed extrinsic sequence with the angles reversed."""
+    angles = jnp.array([0.3, -1.2, 2.0])
+    q_intrinsic = Quaternion.from_euler('XYZ', angles)
+    q_extrinsic = Quaternion.from_euler('zyx', angles[::-1])
+    assert jnp.allclose(q_intrinsic.wxyz, q_extrinsic.wxyz, atol=1e-6)
+
+
+def test_from_euler_degrees():
+    angles = jnp.array([30.0, -45.0, 120.0])
+    q_deg = Quaternion.from_euler('zyx', angles, degrees=True)
+    q_rad = Quaternion.from_euler('zyx', jnp.deg2rad(angles))
+    assert jnp.allclose(q_deg.wxyz, q_rad.wxyz, atol=1e-6)
+
+
+def test_from_euler_integer_input():
+    """Integer angles are promoted to floating point."""
+    q = Quaternion.from_euler('xyz', jnp.array([0, 0, 0]))
+    assert jnp.issubdtype(q.dtype, jnp.floating)
+    assert jnp.allclose(q.wxyz, jnp.array([1.0, 0.0, 0.0, 0.0]))
+
+
+def test_from_euler_wrong_shape():
+    with pytest.raises(ValueError, match=r"shape \(\.\.\., 3\) for sequence 'xyz'"):
+        Quaternion.from_euler('xyz', jnp.zeros(2))
+
+
+# to_euler
+@pytest.mark.parametrize('seq', SEQS)
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_to_euler(seq, do_jit):
+    """to_euler gives the same angles as scipy, in the documented ranges."""
+
+    def func(q):
+        return q.to_euler(seq)
+
+    if do_jit:
+        func = jax.jit(func)
+
+    q = Quaternion.random(jax.random.key(0), (100,))
+    angles = func(q)
+    assert angles.shape == (100, 3)
+    assert jnp.all(angle_diff(angles, q.to_scipy_rotation().as_euler(seq)) < 1e-4)
+    assert jnp.all(jnp.abs(angles[:, [0, 2]]) <= jnp.pi + 1e-6)
+    if is_proper(seq):
+        assert jnp.all((angles[:, 1] >= 0) & (angles[:, 1] <= jnp.pi + 1e-6))
+    else:
+        assert jnp.all(jnp.abs(angles[:, 1]) <= jnp.pi / 2 + 1e-6)
+
+
+@pytest.mark.parametrize('seq', SEQS)
+def test_to_euler_roundtrip(seq):
+    """from_euler(to_euler(q)) is the same rotation as q."""
+    q = Quaternion.random(jax.random.key(1), (100,))
+    q2 = Quaternion.from_euler(seq, q.to_euler(seq))
+    assert jnp.allclose(q2.to_rotation_matrix(), q.to_rotation_matrix(), atol=1e-5)
+
+
+@pytest.mark.parametrize('seq', SEQS)
+@pytest.mark.parametrize('at_lower_bound', [False, True])
+def test_to_euler_gimbal_lock(enable_x64: None, seq, at_lower_bound):
+    """In gimbal lock, the third angle is 0 and the rotation is preserved, as in scipy."""
+    if is_proper(seq):
+        middle = 0.0 if at_lower_bound else jnp.pi
+    else:
+        middle = -jnp.pi / 2 if at_lower_bound else jnp.pi / 2
+    angles = jnp.array([[0.4, middle, -0.3], [-2.0, middle, 1.5]])
+    q = Quaternion.from_euler(seq, angles)
+    result = q.to_euler(seq)
+    assert jnp.all(result[:, 2] == 0)
+    assert jnp.all(angle_diff(result, Rotation.from_euler(seq, angles).as_euler(seq)) < 1e-9)
+    q2 = Quaternion.from_euler(seq, result)
+    assert jnp.allclose(q2.to_rotation_matrix(), q.to_rotation_matrix(), atol=1e-9)
+
+
+def test_to_euler_degrees():
+    q = Quaternion.random(jax.random.key(2), (10,))
+    assert jnp.allclose(q.to_euler('ZYX', degrees=True), jnp.rad2deg(q.to_euler('ZYX')))
+
+
+def test_to_euler_non_unit_and_negated():
+    """The angles depend neither on the norm nor on the sign of the quaternion."""
+    q = Quaternion.random(jax.random.key(3), (10,))
+    expected = q.to_euler('xyz')
+    assert jnp.allclose((3.0 * q).to_euler('xyz'), expected, atol=1e-5)
+    assert jnp.allclose((-q).to_euler('xyz'), expected, atol=1e-5)
+
+
+def test_to_euler_wrong_length():
+    with pytest.raises(ValueError, match='Expected 3 axes'):
+        Quaternion.random(jax.random.key(0)).to_euler('xy')
+
+
+# Sequence validation
+@pytest.mark.parametrize('seq', ['', 'xyzx', 'xyZ', 'xwz', 'xxy', 'XYY'])
+def test_invalid_sequence(seq):
+    with pytest.raises(ValueError):
+        Quaternion.from_euler(seq, jnp.zeros(len(seq)))
+    with pytest.raises(ValueError):
+        Quaternion.random(jax.random.key(0)).to_euler(seq)
 
 
 # from_scipy_rotation, to_scipy_rotation

@@ -41,6 +41,7 @@ q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 | Rotation | `q.rotate_vector(v)` | Rotate 3D vector |
 | Axis-angle | `Quaternion.from_axis_angle(axis, angle)` | Rotation about an axis |
 | Rotation vector | `Quaternion.from_rotation_vector(rotvec)`, `q.to_rotation_vector()` | Axis scaled by angle |
+| Euler angles | `Quaternion.from_euler(seq, angles)`, `q.to_euler(seq)` | Same convention as scipy |
 | scipy Rotation | `Quaternion.from_scipy_rotation(rot)`, `q.to_scipy_rotation()` | Convert to/from `jax.scipy.spatial.transform.Rotation` |
 | SLERP | `q1.slerp(q2, t)` | Spherical interpolation |
 | Log | `q.log()` | Quaternion logarithm |

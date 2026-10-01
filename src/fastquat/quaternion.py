@@ -178,6 +178,32 @@ class Quaternion:
         return cls.from_scalar_vector(xyzw[..., 3], xyzw[..., :3])
 
     @classmethod
+    def from_euler(cls, seq: str, angles: ArrayLike, degrees: bool = False) -> Self:
+        """Create the unit quaternion of a sequence of rotations about the coordinate axes.
+
+        This wraps `jax.scipy.spatial.transform.Rotation.from_euler`, which has the same
+        convention as scipy.
+
+        Args:
+            seq: Sequence of 1 to 3 axes among 'x', 'y' and 'z'. Lowercase letters are extrinsic
+                rotations (about the fixed frame axes), uppercase letters are intrinsic rotations
+                (about the rotating frame axes). Extrinsic and intrinsic rotations cannot be mixed.
+            angles: Array of shape (..., len(seq)) for the rotation angles, in radians unless
+                `degrees` is True.
+            degrees: Whether the angles are in degrees.
+
+        Returns:
+            Quaternion of shape angles.shape[:-1].
+        """
+        angles = jnp.asarray(angles)
+        if angles.shape[-1:] != (len(seq),):
+            raise ValueError(
+                f'Angles must have shape (..., {len(seq)}) for sequence {seq!r}, got {angles.shape}'
+            )
+        angles = angles.astype(jnp.result_type(angles, float))
+        return cls.from_scipy_rotation(Rotation.from_euler(seq, angles, degrees=degrees))
+
+    @classmethod
     def zeros(cls, shape: tuple[int, ...], dtype: DTypeLike | None = None) -> Self:
         """Create quaternions with all components set to 0.
 
@@ -335,6 +361,29 @@ class Quaternion:
             Rotation of the same shape.
         """
         return Rotation.from_quat(jnp.concatenate([self.vector, self.w[..., None]], axis=-1))
+
+    def to_euler(self, seq: str, degrees: bool = False) -> Array:
+        """Convert quaternion to Euler angles.
+
+        This wraps `jax.scipy.spatial.transform.Rotation.as_euler`, which has the same convention
+        as scipy. The first and third angles are in [-π, π]. The second angle is in [0, π] if the
+        first and third axes are the same (proper Euler angles), and in [-π/2, π/2] otherwise
+        (Tait-Bryan angles).
+
+        In gimbal lock, when the second angle is at a bound of its range, only the sum or
+        difference of the first and third angles is defined: the third angle is then set to 0.
+        The angles are discontinuous there, and their gradients are meaningless (possibly NaN).
+        Non-unit quaternions are treated as their normalized counterpart.
+
+        Args:
+            seq: Sequence of 3 axes among 'x', 'y' and 'z', with no two consecutive axes the same.
+                Lowercase letters are extrinsic rotations, uppercase letters are intrinsic ones.
+            degrees: Whether to return the angles in degrees.
+
+        Returns:
+            Array of shape (..., 3)
+        """
+        return self.to_scipy_rotation().as_euler(seq, degrees=degrees)
 
     def rotate_vector(self, v: ArrayLike) -> Array:
         """Apply quaternion rotation to a vector.
