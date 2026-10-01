@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 # Project information
 project = 'FastQuat'
 copyright = '2025, Pierre Chanial'
-author = 'Pierre Chanial'
+author = 'Pierre Chanial, Simon Biquard'
 release = '0.1.0'
 
 # General configuration

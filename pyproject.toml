@@ -6,7 +6,10 @@ build-backend = 'hatchling.build'
 name = 'FastQuat'
 dynamic = ['version']
 description = 'High-performance quaternions with JAX support'
-authors = [{name = 'Pierre Chanial', email = 'chanial@apc.in2p3.fr'}]
+authors = [
+    {name = 'Pierre Chanial', email = 'chanial@apc.in2p3.fr'},
+    {name = 'Simon Biquard', email = 'simon.biquard@manchester.ac.uk'},
+]
 license = 'MIT'
 license-files = ['LICENSE']
 readme = 'README.md'
