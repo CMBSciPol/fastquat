@@ -1,11 +1,13 @@
 """Rotation conversion tests for Quaternion class.
 
-Tests for the conversions to and from rotation matrices, axis-angle, and rotation vectors.
+Tests for the conversions to and from rotation matrices, axis-angle, rotation vectors, and
+jax.scipy Rotation.
 """
 
 import jax
 import jax.numpy as jnp
 import pytest
+from jax.scipy.spatial.transform import Rotation
 
 from fastquat.quaternion import Quaternion
 
@@ -378,3 +380,42 @@ def test_to_rotation_vector_grad_at_identity():
     expected = jnp.concatenate([jnp.zeros((3, 1)), 2 * jnp.eye(3)], axis=1)
     assert jnp.allclose(jax.jacfwd(func)(wxyz), expected)
     assert jnp.allclose(jax.jacrev(func)(wxyz), expected)
+
+
+# from_scipy_rotation, to_scipy_rotation
+def test_scipy_rotation_component_order():
+    """Rotation quaternions are scalar-last (xyzw), Quaternion ones are scalar-first (wxyz)."""
+    q = Quaternion(0.1, 0.2, 0.3, 0.4).normalize()
+    rotation = q.to_scipy_rotation()
+    assert isinstance(rotation, Rotation)
+    assert jnp.allclose(rotation.as_quat(), jnp.roll(q.wxyz, -1), atol=1e-6)
+    assert jnp.allclose(Quaternion.from_scipy_rotation(rotation).wxyz, q.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_scipy_rotation_roundtrip(do_jit):
+    """The conversions are inverse, keep the batch shape, and agree on the rotation."""
+
+    def func(q):
+        return Quaternion.from_scipy_rotation(q.to_scipy_rotation())
+
+    if do_jit:
+        func = jax.jit(func)
+
+    q = Quaternion.random(jax.random.key(0), (4, 5))
+    assert jnp.allclose(func(q).wxyz, q.wxyz, atol=1e-6)
+    assert jnp.allclose(q.to_scipy_rotation().as_matrix(), q.to_rotation_matrix(), atol=1e-5)
+
+
+def test_to_scipy_rotation_normalizes():
+    q = Quaternion(2.0, 0.0, 0.0, 0.0)
+    assert jnp.allclose(q.to_scipy_rotation().as_quat(), jnp.array([0.0, 0.0, 0.0, 1.0]))
+
+
+def test_from_scipy_rotation_numpy_scipy():
+    """A NumPy scipy Rotation is accepted too."""
+    scipy_transform = pytest.importorskip('scipy.spatial.transform')
+    rotation = scipy_transform.Rotation.from_euler('z', 90, degrees=True)
+    q = Quaternion.from_scipy_rotation(rotation)
+    expected = Quaternion.from_axis_angle(jnp.array([0.0, 0.0, 1.0]), jnp.pi / 2)
+    assert jnp.allclose(q.wxyz, expected.wxyz, atol=1e-6)

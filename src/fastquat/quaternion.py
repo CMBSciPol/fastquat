@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import Array
+from jax.scipy.spatial.transform import Rotation
 from jax.tree_util import register_pytree_node_class
 from jax.typing import ArrayLike, DTypeLike
 
@@ -162,6 +163,21 @@ class Quaternion:
         return cls.from_scalar_vector(jnp.zeros_like(half_rotvec[..., 0]), half_rotvec).exp()
 
     @classmethod
+    def from_scipy_rotation(cls, rotation: Any) -> Self:
+        """Create the unit quaternion of a rotation object.
+
+        Args:
+            rotation: A `jax.scipy.spatial.transform.Rotation`, or any object with the same
+                `as_quat` method returning scalar-last quaternions, such as a
+                `scipy.spatial.transform.Rotation`.
+
+        Returns:
+            Quaternion of shape rotation.as_quat().shape[:-1].
+        """
+        xyzw = jnp.asarray(rotation.as_quat())
+        return cls.from_scalar_vector(xyzw[..., 3], xyzw[..., :3])
+
+    @classmethod
     def zeros(cls, shape: tuple[int, ...], dtype: DTypeLike | None = None) -> Self:
         """Create quaternions with all components set to 0.
 
@@ -309,6 +325,16 @@ class Quaternion:
         sign = jnp.where(self.w < 0, -1, 1).astype(self.dtype)
         # rotvec = 2 log(q), whose vector part does not depend on |q| and is safe at the identity
         return 2 * (sign * self).log().vector
+
+    def to_scipy_rotation(self) -> Rotation:
+        """Convert quaternion to a `jax.scipy.spatial.transform.Rotation`.
+
+        Non-unit quaternions are normalized.
+
+        Returns:
+            Rotation of the same shape.
+        """
+        return Rotation.from_quat(jnp.concatenate([self.vector, self.w[..., None]], axis=-1))
 
     def rotate_vector(self, v: ArrayLike) -> Array:
         """Apply quaternion rotation to a vector.
