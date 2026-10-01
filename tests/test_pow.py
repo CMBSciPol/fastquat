@@ -1,3 +1,8 @@
+"""Power operations tests for Quaternion class.
+
+Tests for log, exp, __pow__, and the gradients of log and exp.
+"""
+
 import jax
 import jax.numpy as jnp
 import jax.test_util

@@ -1,6 +1,7 @@
 """Mathematical operations tests for Quaternion class.
 
-Tests for addition, subtraction, multiplication, negation, conjugate, norm, normalize, inverse.
+Tests for addition, subtraction, multiplication, division, broadcasting, unary plus, negation,
+conjugate, norm, normalize, and inverse.
 """
 
 import jax
