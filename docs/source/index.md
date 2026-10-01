@@ -35,6 +35,7 @@ q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 |-----------|--------|-------------|
 | Addition | `q1 + q2` | Component-wise addition |
 | Subtraction | `q1 - q2` | Component-wise subtraction |
+| Equality | `q1 == q2`, `q1 != q2` | Element-wise, exact comparison |
 | Multiplication | `q1 * q2` | Hamilton product |
 | Exponentiation | `q ** p` | Quaternion power |
 | Inverse | `1 / q` | Multiplicative inverse |

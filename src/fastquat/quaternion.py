@@ -446,6 +446,34 @@ class Quaternion:
             idx = (idx,)
         return self.from_array(self.wxyz[(*idx, slice(None))])
 
+    def __eq__(self, other: Any) -> Array:  # ty: ignore[invalid-method-override]
+        """Element-wise quaternion equality.
+
+        Real scalars and arrays are compared as quaternions with a zero vector part.
+
+        Returns:
+            Boolean array of the broadcast shape, True where all four components are equal.
+        """
+        if isinstance(other, Quaternion):
+            return jnp.all(self.wxyz == other.wxyz, axis=-1)
+
+        try:
+            other = jnp.asarray(other)
+        except (TypeError, ValueError):  # jnp.asarray(None) raises ValueError
+            return NotImplemented
+
+        if jnp.iscomplexobj(other):
+            raise NotImplementedError('Quaternion and complex comparison is not implemented.')
+
+        return (self.w == other) & jnp.all(self.vector == 0, axis=-1)
+
+    def __ne__(self, other: Any) -> Array:  # ty: ignore[invalid-method-override]
+        """Element-wise quaternion inequality."""
+        equal = self.__eq__(other)
+        if equal is NotImplemented:
+            return NotImplemented
+        return ~equal
+
     def __pos__(self) -> Self:
         """Quaternion positive."""
         return self
