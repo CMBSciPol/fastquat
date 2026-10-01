@@ -68,9 +68,7 @@ def test_eq_broadcasting():
     """Test that comparison broadcasts the quaternion shapes."""
     q = Quaternion.from_array(jnp.array([[1.0, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]))
     p = Quaternion.from_array(jnp.array([[[0.0, 1, 0, 0]], [[0, 0, 1, 0]]]))
-    np.testing.assert_array_equal(
-        q == p, np.array([[False, True, False], [False, False, True]])
-    )
+    np.testing.assert_array_equal(q == p, np.array([[False, True, False], [False, False, True]]))
     np.testing.assert_array_equal(q == Quaternion(0, 1), np.array([False, True, False]))
 
 
