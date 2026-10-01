@@ -95,23 +95,37 @@ class Quaternion:
             rot: Array of shape (..., 3, 3) representing the rotation matrix
 
         Returns:
-            The normalized Quaternion tensor representing the rotation matrix.
+            The normalized Quaternion tensor representing the rotation matrix, with w >= 0.
         """
         rot = jnp.asarray(rot)
         if rot.shape[-2:] != (3, 3):
             raise ValueError(f'Rotation matrix must have shape (..., 3, 3), got {rot.shape}')
+        rot = rot.astype(jnp.result_type(rot, float))
 
-        # Implémentation de la conversion matrice -> Self
-        trace = jnp.trace(rot, axis1=-2, axis2=-1)
+        m00, m01, m02 = rot[..., 0, 0], rot[..., 0, 1], rot[..., 0, 2]
+        m10, m11, m12 = rot[..., 1, 0], rot[..., 1, 1], rot[..., 1, 2]
+        m20, m21, m22 = rot[..., 2, 0], rot[..., 2, 1], rot[..., 2, 2]
+        trace = m00 + m11 + m22
 
-        # Cas où trace > 0
-        s = jnp.sqrt(trace + 1.0) * 2  # s = 4 * w
-        w = 0.25 * s
-        x = (rot[..., 2, 1] - rot[..., 1, 2]) / s
-        y = (rot[..., 0, 2] - rot[..., 2, 0]) / s
-        z = (rot[..., 1, 0] - rot[..., 0, 1]) / s
+        # Each row is 4 q_k q for k = w, x, y, z: proportional to q, with 4 q_k² as its k-th
+        # component. Picking the row with the largest q_k² avoids the cancellation of the
+        # trace-based formula near rotations by π, and its norm 4 |q_k| >= 2 is safe to divide by.
+        candidates = jnp.stack(
+            [
+                jnp.stack([1 + trace, m21 - m12, m02 - m20, m10 - m01], axis=-1),
+                jnp.stack([m21 - m12, 1 + 2 * m00 - trace, m01 + m10, m02 + m20], axis=-1),
+                jnp.stack([m02 - m20, m01 + m10, 1 + 2 * m11 - trace, m12 + m21], axis=-1),
+                jnp.stack([m10 - m01, m02 + m20, m12 + m21, 1 + 2 * m22 - trace], axis=-1),
+            ],
+            axis=-2,
+        )
+        best = jnp.argmax(jnp.stack([trace, m00, m11, m22], axis=-1), axis=-1)
+        q = jnp.take_along_axis(candidates, best[..., None, None], axis=-2)[..., 0, :]
+        # q and -q are the same rotation: return the one with w >= 0
+        q = jnp.where(q[..., :1] < 0, -q, q)
+        q = q / jnp.linalg.norm(q, axis=-1, keepdims=True)
 
-        return cls.from_array(jnp.stack([w, x, y, z], axis=-1))
+        return cls.from_array(q)
 
     @classmethod
     def from_axis_angle(cls, axis: ArrayLike, angle: ArrayLike) -> Self:
