@@ -2,7 +2,10 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/fastquat)](https://pypi.org/project/fastquat/)
 [![Python versions](https://img.shields.io/pypi/pyversions/fastquat)](https://pypi.org/project/fastquat/)
-[![Tests](https://github.com/CMBSciPol/fastquat/actions/workflows/ci.yml/badge.svg)](https://github.com/CMBSciPol/fastquat/actions)
+[![License](https://img.shields.io/pypi/l/fastquat)](https://github.com/CMBSciPol/fastquat/blob/main/LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/fastquat/badge/?version=latest)](https://fastquat.readthedocs.io/en/latest/)
+[![CI](https://github.com/CMBSciPol/fastquat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CMBSciPol/fastquat/actions/workflows/ci.yml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 FastQuat provides optimized quaternion operations with full JAX compatibility, featuring:
 
