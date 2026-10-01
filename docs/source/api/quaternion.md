@@ -44,6 +44,8 @@ compilation, automatic differentiation, and vectorization.
 
 ```{eval-rst}
 .. automethod:: fastquat.Quaternion.__abs__
+.. automethod:: fastquat.Quaternion.__eq__
+.. automethod:: fastquat.Quaternion.__ne__
 .. automethod:: fastquat.Quaternion.normalize
 .. automethod:: fastquat.Quaternion.conjugate
 .. automethod:: fastquat.Quaternion.conj

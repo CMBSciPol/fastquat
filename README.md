@@ -44,6 +44,9 @@ q_diff = q1 - q2
 q_product = q1 * q2
 q_power = q**p
 
+# Comparison (element-wise)
+same = q1 == q2  # Boolean array, True where all components are equal
+
 # Normalization
 norm = abs(q)  # Quaternion norm
 q_unit = q.normalize()  # Unit quaternion
@@ -69,6 +72,7 @@ interpolated = q1.slerp(q2, t=0.5)  # Halfway between q1 and q2
 ### Core Operations
 - **Quaternion arithmetic**: Addition, multiplication, conjugation, inverse, power, exponentiation, logarithm
 - **Normalization**: Efficient unit quaternion computation
+- **Comparison**: Element-wise `==` and `!=`, like NumPy arrays
 - **Conversion**: To/from rotation matrices, axis-angle, rotation vectors, Euler angles
 - **Vector rotation**: Direct vector transformation
 
