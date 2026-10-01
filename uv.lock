@@ -537,10 +537,7 @@ lint = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "jax", specifier = ">=0.4.0" },
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
-]
+requires-dist = [{ name = "jax", specifier = ">=0.7.0" }]
 
 [package.metadata.requires-dev]
 cuda12 = [{ name = "jax", extras = ["cuda12"], specifier = ">=0.7.0" }]
