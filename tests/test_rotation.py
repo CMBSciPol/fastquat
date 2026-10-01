@@ -389,3 +389,40 @@ def test_slerp_close_quaternions(do_jit):
     dot2 = jnp.sum(q2.wxyz * result.wxyz)
     assert dot1 > 0.9
     assert dot2 > 0.9
+
+
+@pytest.mark.parametrize('angle', [1e-4, 0.02, 0.5, 2.0, 3.1])
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_slerp_constant_angular_velocity(angle, do_jit):
+    """Slerp from the identity to a rotation by angle is the rotation by t * angle.
+
+    The small angles are below the threshold of the former linear interpolation fallback.
+    """
+
+    def func(q1, q2, t):
+        return q1.slerp(q2, t)
+
+    if do_jit:
+        func = jax.jit(func)
+
+    axis = jnp.array([1.0, -2.0, 0.5])
+    t = jnp.linspace(0.0, 1.0, 11)
+    q1 = Quaternion.ones(())
+    q2 = Quaternion.from_axis_angle(axis, angle)
+    expected = Quaternion.from_axis_angle(axis, t * angle)
+    assert jnp.allclose(func(q1, q2, t).wxyz, expected.wxyz, atol=1e-6)
+
+
+@pytest.mark.parametrize('grad', [jax.jacfwd, jax.jacrev])
+def test_slerp_grad_identical_quaternions(grad):
+    """The gradients are finite and exact when both quaternions are equal."""
+    axis = jnp.array([0.0, 0.0, 1.0])
+
+    def func(angle):
+        return Quaternion.ones(()).slerp(Quaternion.from_axis_angle(axis, angle), 0.3).wxyz
+
+    # d/da of the rotation by 0.3 a about z, at a = 0
+    assert jnp.allclose(grad(func)(0.0), jnp.array([0.0, 0.0, 0.0, 0.15]))
+    assert jnp.isfinite(
+        jax.grad(lambda t: Quaternion.ones(()).slerp(Quaternion.ones(()), t).w)(0.3)
+    )

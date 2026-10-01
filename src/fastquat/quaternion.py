@@ -742,32 +742,22 @@ class Quaternion:
         # Note that this is necessary to handle the double cover of SO(3)
         # by unit quaternions: q and -q represent the same rotation.
         q2_corrected = jnp.where(jnp.expand_dims(dot < 0, -1), -q2.wxyz, q2.wxyz)
-        dot = jnp.abs(dot)
 
-        # If quaternions are very close, use linear interpolation to avoid numerical issues
-        threshold = 0.9995
-        use_linear = dot > threshold
+        # θ is the angle between q1 and q2 on the unit sphere of R⁴, in [0, π/2]. Unlike
+        # arccos(dot), the half-angle formula is accurate near θ = 0. The where guard keeps the
+        # gradients finite when q1 = q2.
+        diff_sq = jnp.sum((q1.wxyz - q2_corrected) ** 2, axis=-1)
+        is_equal = diff_sq == 0
+        diff_norm = jnp.where(is_equal, 0.0, jnp.sqrt(jnp.where(is_equal, 1.0, diff_sq)))
+        sum_norm = jnp.linalg.norm(q1.wxyz + q2_corrected, axis=-1)
+        theta = 2 * jnp.arctan2(diff_norm, sum_norm)
 
-        # Linear interpolation case
-        result_linear = q1.wxyz + jnp.expand_dims(t * (1 - t), -1) * (q2_corrected - q1.wxyz)
-        result_linear = self.from_array(result_linear).normalize()
+        # sin(tθ)/sin(θ) = t sinc(tθ)/sinc(θ), written with sinc so that the weights and their
+        # derivatives are exact at θ = 0, without a linear interpolation fallback.
+        # sinc(θ) >= 2/π since θ <= π/2.
+        sinc_theta = jnp.sinc(theta / jnp.pi)
+        weight1 = (1 - t) * jnp.sinc((1 - t) * theta / jnp.pi) / sinc_theta
+        weight2 = t * jnp.sinc(t * theta / jnp.pi) / sinc_theta
 
-        # Spherical interpolation case
-        theta = jnp.arccos(jnp.clip(dot, 0.0, 1.0))
-        sin_theta = jnp.sin(theta)
-
-        # Avoid division by zero
-        safe_sin_theta = jnp.where(sin_theta == 0, 1.0, sin_theta)
-
-        factor1 = jnp.sin((1 - t) * theta) / safe_sin_theta
-        factor2 = jnp.sin(t * theta) / safe_sin_theta
-
-        result_slerp = (
-            jnp.expand_dims(factor1, -1) * q1.wxyz + jnp.expand_dims(factor2, -1) * q2_corrected
-        )
-        result_slerp = self.from_array(result_slerp)
-
-        # Choose between linear and spherical interpolation
-        result = jnp.where(jnp.expand_dims(use_linear, -1), result_linear.wxyz, result_slerp.wxyz)
-
+        result = weight1[..., None] * q1.wxyz + weight2[..., None] * q2_corrected
         return self.from_array(result)
