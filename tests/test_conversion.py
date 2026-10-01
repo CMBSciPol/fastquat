@@ -85,6 +85,46 @@ def test_from_rotation_matrix_batch(do_jit):
     assert jnp.allclose(q_batch.wxyz, expected_batch, atol=1e-6)
 
 
+@pytest.mark.parametrize(
+    'axis', [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, -2.0, 0.5]]
+)
+@pytest.mark.parametrize('angle', [jnp.pi, 0.999 * jnp.pi, 0.75 * jnp.pi, -0.6 * jnp.pi])
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_from_rotation_matrix_large_angles(axis, angle, do_jit):
+    """Rotations by angles up to π, where the trace of the matrix is -1, are recovered."""
+    func = Quaternion.from_rotation_matrix
+    if do_jit:
+        func = jax.jit(func)
+
+    q = Quaternion.from_axis_angle(jnp.array(axis), angle)
+    result = func(q.to_rotation_matrix())
+    assert jnp.allclose(abs(result), 1.0, atol=1e-6)
+    # q and -q are the same rotation
+    sign = jnp.sign(jnp.sum(result.wxyz * q.wxyz))
+    assert jnp.allclose(sign * result.wxyz, q.wxyz, atol=1e-5)
+
+
+def test_from_rotation_matrix_roundtrip_random():
+    """Random rotations cover the four cases of the conversion."""
+    q = Quaternion.random(jax.random.key(0), (1000,))
+    result = Quaternion.from_rotation_matrix(q.to_rotation_matrix())
+    assert jnp.allclose(abs(result), 1.0, atol=1e-6)
+    sign = jnp.sign(jnp.sum(result.wxyz * q.wxyz, axis=-1))[:, None]
+    assert jnp.allclose(sign * result.wxyz, q.wxyz, atol=1e-5)
+    assert jnp.all(result.w >= 0)
+
+
+def test_from_rotation_matrix_grad_at_pi():
+    """The gradient is finite for rotations by π."""
+
+    def func(rot):
+        return Quaternion.from_rotation_matrix(rot).wxyz
+
+    rot = jnp.diag(jnp.array([1.0, -1.0, -1.0]))  # rotation by π about x
+    jac = jax.jacfwd(func)(rot)
+    assert jnp.all(jnp.isfinite(jac))
+
+
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_from_rotation_matrix_wrong_shape(do_jit):
     """Test from_rotation_matrix with wrong shape raises ValueError."""
