@@ -1,13 +1,16 @@
 name: Release to PyPI
 
+permissions: {}
+
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   publish:
     name: Publish package to PyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: release
 
     permissions:
@@ -15,30 +18,29 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.0.1
         with:
-          enable-cache: true
+          version: '0.12.18'
+          python-version: '3.11'
 
       - name: Check tag of last commit
         run: |
           echo "Current tag:"
           git describe --tags --exact-match HEAD
 
-      - name: Clean uv cache for dynamic versioning
-        run: uv cache clean
-
       - name: Build package
         run: uv build
+
+      - name: Test built wheel
+        run: |
+          uv sync --locked --no-install-project
+          uv pip install dist/fastquat-*.whl
+          uv run --no-sync pytest
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
