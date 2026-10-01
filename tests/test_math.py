@@ -1,6 +1,7 @@
 """Mathematical operations tests for Quaternion class.
 
-Tests for addition, subtraction, multiplication, negation, conjugate, norm, normalize, inverse.
+Tests for addition, subtraction, multiplication, division, broadcasting, unary plus, negation,
+conjugate, norm, normalize, and inverse.
 """
 
 import jax
@@ -49,7 +50,7 @@ def test_add_radd_real_scalar(func, scalar, do_jit):
 @pytest.mark.parametrize('array', [jnp.array([1, 2]), np.array([1, 2])])
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_add_radd_real_array(func, array, do_jit):
-    """Test quaternion multiplication by real array."""
+    """Test quaternion addition with real array."""
 
     if do_jit:
         func = jax.jit(func)
@@ -83,7 +84,7 @@ def test_sub_quaternion(do_jit):
 )
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_sub_real_scalar(scalar, do_jit):
-    """Test quaternion subtraction with scalar."""
+    """Test subtraction of a real scalar from a quaternion."""
 
     def func(q_, scalar_):
         return q_ - scalar_
@@ -100,7 +101,7 @@ def test_sub_real_scalar(scalar, do_jit):
 @pytest.mark.parametrize('array', [jnp.array([1, 2]), np.array([1, 2])])
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_sub_real_array(array, do_jit):
-    """Test quaternion multiplication by real array."""
+    """Test subtraction of a real array from a quaternion."""
 
     def func(q_, array_):
         return q_ - array_
@@ -119,7 +120,7 @@ def test_sub_real_array(array, do_jit):
 )
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_rsub_real_scalar(scalar, do_jit):
-    """Test quaternion subtraction with scalar."""
+    """Test subtraction of a quaternion from a real scalar."""
 
     def func(q_, scalar_):
         return scalar_ - q_
@@ -136,7 +137,7 @@ def test_rsub_real_scalar(scalar, do_jit):
 @pytest.mark.parametrize('array', [jnp.array([1, 2]), np.array([1, 2])])
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_rsub_real_array(array, do_jit):
-    """Test quaternion multiplication by real array."""
+    """Test subtraction of a quaternion from a real array."""
 
     def func(q_, array_):
         return array_ - q_
@@ -381,10 +382,10 @@ def test_broadcasting_operations(op, expected, do_jit):
     assert jnp.allclose(result.wxyz, expected)
 
 
-# Negation
+# Unary plus
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_pos(do_jit):
-    """Test quaternion negation."""
+    """Test quaternion unary plus."""
 
     def func(q):
         return +q
@@ -415,6 +416,7 @@ def test_neg(do_jit):
     assert jnp.allclose(result.wxyz, expected)
 
 
+# Conjugate
 @pytest.mark.parametrize('func', [lambda q: q.conj(), lambda q: q.conjugate()])
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_conj_conjugate(func, do_jit):

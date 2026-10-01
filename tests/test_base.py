@@ -365,10 +365,11 @@ def test_to_components(do_jit: bool):
     assert jnp.allclose(z, 4.0)
 
 
+# Iteration
 @pytest.mark.parametrize('shape', [(0,), (2,), (2, 3)])
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_iter(do_jit: bool, shape: tuple[int, ...]):
-    """Test iteration over 1-dimensional quaternion array."""
+    """Test iteration over the first axis of a quaternion array."""
 
     def iterate(q_array: Quaternion):
         # This function uses iteration implicitly
@@ -388,7 +389,6 @@ def test_iter(do_jit: bool, shape: tuple[int, ...]):
         assert jnp.allclose(quaternion.wxyz, jnp.asarray(array))
 
 
-# Iteration tests
 def test_iter_0d():
     """Test that iteration over 0-d quaternion raises TypeError."""
     q = Quaternion(1.0)  # 0-dimensional quaternion
