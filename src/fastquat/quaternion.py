@@ -704,12 +704,12 @@ class Quaternion:
         return self.wxyz.shape[:-1]
 
     @property
-    def ndim(self):
+    def ndim(self) -> int:
         """Number of dimensions of the quaternion tensor (without the quaternion dimension)."""
         return self.wxyz.ndim - 1
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Total number of quaternions."""
         return self.wxyz.size >> 2
 
