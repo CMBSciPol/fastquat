@@ -456,6 +456,15 @@ def test_conj_conjugate(func, do_jit):
     assert jnp.allclose(conj_q.wxyz, expected)
 
 
+@pytest.mark.parametrize('dtype', [jnp.int8, jnp.int16, jnp.float16, jnp.bfloat16])
+def test_conj_preserves_dtype(dtype):
+    """Test that the conjugate keeps the dtype of the quaternion."""
+    q = Quaternion(1, 2, 3, 4, dtype=dtype)
+    conj_q = q.conj()
+    assert conj_q.dtype == dtype
+    assert jnp.array_equal(conj_q.wxyz, jnp.array([1, -2, -3, -4], dtype=dtype))
+
+
 # Norm
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_norm(do_jit):

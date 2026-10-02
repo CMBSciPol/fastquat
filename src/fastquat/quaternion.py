@@ -1,4 +1,6 @@
-from typing import Any, Self
+import operator
+from collections.abc import Sequence
+from typing import Any, Self, SupportsIndex
 
 import jax
 import jax.numpy as jnp
@@ -7,6 +9,15 @@ from jax import Array
 from jax.scipy.spatial.transform import Rotation
 from jax.tree_util import register_pytree_node_class
 from jax.typing import ArrayLike, DTypeLike
+
+ShapeLike = SupportsIndex | Sequence[SupportsIndex]
+
+
+def _to_int_tuple(value: ShapeLike) -> tuple[int, ...]:
+    """Convert an int or a sequence of ints, such as a shape or axes, to a tuple of ints."""
+    if isinstance(value, Sequence):
+        return tuple(operator.index(item) for item in value)
+    return (operator.index(value),)
 
 
 @register_pytree_node_class
@@ -222,7 +233,7 @@ class Quaternion:
         return cls.from_scipy_rotation(Rotation.from_euler(seq, angles, degrees=degrees))
 
     @classmethod
-    def zeros(cls, shape: tuple[int, ...], dtype: DTypeLike | None = None) -> Self:
+    def zeros(cls, shape: ShapeLike, dtype: DTypeLike | None = None) -> Self:
         """Create quaternions with all components set to 0.
 
         Args:
@@ -232,11 +243,11 @@ class Quaternion:
         Returns:
             Quaternion with all components equal to 0.
         """
-        data = jnp.zeros(shape + (4,), dtype=dtype)
+        data = jnp.zeros(_to_int_tuple(shape) + (4,), dtype=dtype)
         return cls.from_array(data)
 
     @classmethod
-    def ones(cls, shape: tuple[int, ...], dtype: DTypeLike | None = None) -> Self:
+    def ones(cls, shape: ShapeLike, dtype: DTypeLike | None = None) -> Self:
         """Create quaternions with scalar component set to 1 and vector components set to 0.
 
         Args:
@@ -246,14 +257,12 @@ class Quaternion:
         Returns:
             Quaternions with w=1 and x=y=z=0.
         """
-        data = jnp.zeros(shape + (4,), dtype=dtype)
+        data = jnp.zeros(_to_int_tuple(shape) + (4,), dtype=dtype)
         data = data.at[..., 0].set(1.0)
         return cls.from_array(data)
 
     @classmethod
-    def full(
-        cls, shape: tuple[int, ...], fill_value: float, dtype: DTypeLike | None = None
-    ) -> Self:
+    def full(cls, shape: ShapeLike, fill_value: float, dtype: DTypeLike | None = None) -> Self:
         """Create quaternions with scalar component set to a value and vector components set to 0.
 
         Args:
@@ -264,14 +273,12 @@ class Quaternion:
         Returns:
             Quaternions with w=fill_value and x=y=z=0.
         """
-        data = jnp.zeros(shape + (4,), dtype=dtype)
+        data = jnp.zeros(_to_int_tuple(shape) + (4,), dtype=dtype)
         data = data.at[..., 0].set(fill_value)
         return cls.from_array(data)
 
     @classmethod
-    def random(
-        cls, key: Array, shape: tuple[int, ...] = (), dtype: DTypeLike | None = None
-    ) -> Self:
+    def random(cls, key: Array, shape: ShapeLike = (), dtype: DTypeLike | None = None) -> Self:
         """Generate normalized random quaternions.
 
         Args:
@@ -282,7 +289,7 @@ class Quaternion:
         Returns:
             Normalized Quaternion.
         """
-        data = jax.random.normal(key, shape + (4,), dtype=dtype)
+        data = jax.random.normal(key, _to_int_tuple(shape) + (4,), dtype=dtype)
         return cls.from_array(data).normalize()
 
     @property
@@ -740,32 +747,54 @@ class Quaternion:
         """Data type."""
         return self.wxyz.dtype
 
-    def reshape(self, *shape) -> Self:
-        """Redimensionne le tableau de quaternions"""
+    def reshape(self, *shape: ShapeLike) -> Self:
+        """Reshape the tensor of quaternions.
+
+        Args:
+            shape: The new shape, as an int, a sequence of ints, or several ints.
+
+        Returns:
+            Quaternions with the new shape.
+        """
         if len(shape) == 0:
             raise ValueError('Must specify at least one dimension')
-        if isinstance(shape[0], tuple):
-            if len(shape) > 1:
-                raise ValueError('Cannot specify more than one shape')
-            shape = shape[0]
-        new_shape = shape + (4,)
-        return self.from_array(self.wxyz.reshape(new_shape))
+        if len(shape) == 1:
+            new_shape = _to_int_tuple(shape[0])
+        else:
+            new_shape = _to_int_tuple(shape)  # ty: ignore[invalid-argument-type]
+        return self.from_array(self.wxyz.reshape(new_shape + (4,)))
 
     def flatten(self) -> Self:
-        """Aplatis le tableau de quaternions"""
+        """Flatten the tensor of quaternions into one dimension."""
         return self.from_array(self.wxyz.reshape(-1, 4))
 
     def ravel(self) -> Self:
-        """Aplatis le tableau de quaternions"""
+        """Flatten the tensor of quaternions into one dimension."""
         return self.flatten()
 
-    def squeeze(self, axis=None) -> Self:
-        """Supprime les dimensions de taille 1"""
+    def squeeze(self, axis: ShapeLike | None = None) -> Self:
+        """Remove axes of length one.
+
+        Args:
+            axis: The axis or axes to remove. If None, all axes of length one are removed.
+
+        Returns:
+            Quaternions with the axes removed.
+        """
+        if axis is not None:
+            # Negative axes are counted from the quaternion shape, not from the component axis
+            axes = _to_int_tuple(axis)
+            for ax in axes:
+                if not -self.ndim <= ax < self.ndim:
+                    raise ValueError(
+                        f'axis {ax} is out of bounds for quaternions of dimension {self.ndim}'
+                    )
+            axis = tuple(ax % self.ndim for ax in axes)
         return self.from_array(jnp.squeeze(self.wxyz, axis=axis))
 
     def conjugate(self) -> Self:
         """Quaternion conjugate."""
-        sign = jnp.array([1, -1, -1, -1])
+        sign = jnp.array([1, -1, -1, -1], dtype=self.dtype)
         return self.from_array(self.wxyz * sign)
 
     def conj(self) -> Self:

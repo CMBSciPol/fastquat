@@ -5,6 +5,7 @@ Tests for shape, ndim, size, dtype, itemsize, __len__, reshape, flatten, ravel, 
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 from fastquat.quaternion import Quaternion
@@ -137,6 +138,22 @@ def test_reshape_forms_equivalence():
     assert jnp.allclose(q_tuple.wxyz, q_args.wxyz)
 
 
+@pytest.mark.parametrize(
+    'new_shape, expected_shape', [([2, 3], (2, 3)), (6, (6,)), (-1, (6,)), ((-1, 2), (3, 2))]
+)
+def test_reshape_shape_like(new_shape, expected_shape):
+    """Test reshape with an int, a list, or a shape with -1."""
+    q = Quaternion.ones((2, 3))
+    assert q.reshape(new_shape).shape == expected_shape
+
+
+def test_reshape_multiple_shapes_raises():
+    """Test reshape with several shapes raises TypeError."""
+    q = Quaternion.ones((6,))
+    with pytest.raises(TypeError):
+        q.reshape((2, 3), (3, 2))
+
+
 def test_reshape_empty_raises():
     """Test reshape with empty shape raises ValueError."""
     q = Quaternion.ones((6,))
@@ -248,6 +265,39 @@ def test_squeeze_axis(shape, axis, expected_shape, do_jit):
     q = Quaternion.ones(shape)
     q_squeezed = func(q, axis)
     assert q_squeezed.shape == expected_shape
+
+
+@pytest.mark.parametrize(
+    'shape, axis, expected_shape',
+    [
+        ((2, 1), -1, (2,)),
+        ((1, 3, 1), -3, (3, 1)),
+        ((1, 3, 1), (0, -1), (3,)),
+        ((1, 3, 1), [0, 2], (3,)),
+    ],
+)
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_squeeze_negative_and_multiple_axes(shape, axis, expected_shape, do_jit):
+    """Test squeeze counts negative axes from the quaternion shape, not the component axis."""
+
+    def func(q):
+        return q.squeeze(axis=axis)
+
+    if do_jit:
+        func = jax.jit(func)
+
+    q = Quaternion.from_array(jnp.arange(np.prod(shape) * 4).reshape(shape + (4,)))
+    q_squeezed = func(q)
+    assert q_squeezed.shape == expected_shape
+    assert jnp.array_equal(q_squeezed.wxyz, q.wxyz.reshape(expected_shape + (4,)))
+
+
+@pytest.mark.parametrize('axis', [2, -3])
+def test_squeeze_axis_out_of_bounds_raises(axis):
+    """Test squeeze with an axis out of bounds, including the component axis, raises."""
+    q = Quaternion.ones((2, 1))
+    with pytest.raises(ValueError):
+        q.squeeze(axis=axis)
 
 
 # Empty tensor
