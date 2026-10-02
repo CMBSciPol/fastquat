@@ -73,6 +73,8 @@ class Quaternion:
     def from_scalar_vector(cls, scalar: ArrayLike, vector: ArrayLike) -> Self:
         """Create a quaternion from scalar and vector parts.
 
+        The scalar part and the batch dimensions of the vector part are broadcast together.
+
         Args:
             scalar: Array of shape (...,) for the scalar part.
             vector: Array of shape (..., 3) for the vector part.
@@ -84,7 +86,9 @@ class Quaternion:
         vector = jnp.asarray(vector)
         if vector.shape[-1:] != (3,):
             raise ValueError(f'Vector must have shape (..., 3), got {vector.shape}')
-        scalar = jnp.expand_dims(scalar, axis=-1)
+        shape = jnp.broadcast_shapes(scalar.shape, vector.shape[:-1])
+        scalar = jnp.broadcast_to(scalar, shape)[..., None]
+        vector = jnp.broadcast_to(vector, shape + (3,))
         return cls.from_array(jnp.concatenate([scalar, vector], axis=-1))
 
     @classmethod

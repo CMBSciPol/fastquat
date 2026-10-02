@@ -137,6 +137,28 @@ def test_from_scalar_vector_creation(do_jit: bool):
     assert jnp.allclose(q.wxyz, expected)
 
 
+@pytest.mark.parametrize(
+    'scalar_shape, vector_shape, expected_shape',
+    [((), (2, 3), (2,)), ((2,), (3,), (2,)), ((2, 1), (4, 3), (2, 4))],
+)
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_from_scalar_vector_broadcast(scalar_shape, vector_shape, expected_shape, do_jit: bool):
+    """Test that from_scalar_vector broadcasts the scalar and vector parts."""
+
+    def create(scalar_, vector_):
+        return Quaternion.from_scalar_vector(scalar_, vector_)
+
+    if do_jit:
+        create = jax.jit(create)
+
+    scalar = jnp.full(scalar_shape, 1.0)
+    vector = jnp.full(vector_shape, 2.0)
+    q = create(scalar, vector)
+    assert q.shape == expected_shape
+    assert jnp.all(q.w == 1.0)
+    assert jnp.all(q.vector == 2.0)
+
+
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_from_scalar_vector_wrong_shape(do_jit: bool):
     """Test from_scalar_vector with wrong vector shape raises ValueError."""
