@@ -278,6 +278,23 @@ def test_random_factory(enable_x64: None, shape: tuple[int, ...], dtype: DTypeLi
     assert jnp.allclose(abs(q), 1.0)  # Should be normalized
 
 
+@pytest.mark.parametrize(
+    'factory',
+    [
+        Quaternion.zeros,
+        Quaternion.ones,
+        lambda shape: Quaternion.full(shape, 2.5),
+        lambda shape: Quaternion.random(jr.key(0), shape),
+    ],
+)
+@pytest.mark.parametrize(
+    'shape, expected_shape', [(3, (3,)), (np.int64(3), (3,)), ([2, 3], (2, 3))]
+)
+def test_factories_shape_like(factory, shape, expected_shape):
+    """Test that factory methods accept an int or a list as shape, like NumPy."""
+    assert factory(shape).shape == expected_shape
+
+
 def test_factories_default_dtype():
     """Test factory methods respect dtype parameter."""
     shape = (2, 3)
