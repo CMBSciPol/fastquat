@@ -500,7 +500,7 @@ class Quaternion:
 
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
@@ -519,7 +519,7 @@ class Quaternion:
 
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
@@ -531,7 +531,7 @@ class Quaternion:
         """Quaternion subtraction."""
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
@@ -554,7 +554,7 @@ class Quaternion:
 
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
@@ -566,7 +566,7 @@ class Quaternion:
         """Quaternion multiplication."""
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
@@ -581,7 +581,7 @@ class Quaternion:
 
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
@@ -593,7 +593,7 @@ class Quaternion:
         """Quaternion division."""
         try:
             other = jnp.asarray(other)
-        except TypeError:
+        except (TypeError, ValueError, OverflowError):
             return NotImplemented
 
         if jnp.iscomplexobj(other):
