@@ -635,6 +635,10 @@ class Quaternion:
         For a quaternion q = |q| * (cos(θ) + sin(θ)v), the logarithm is:
         log(q) = log(|q|) + θ * v
 
+        For a real quaternion, the axis v is undefined. This is harmless when q = a > 0 (θ = 0),
+        but for q = -a, we must choose v because the result depends on it. By convention, the axis
+        i is used: log(-a) = log(a) + π * i.
+
         For the zero quaternion, returns (-inf, 0, 0, 0).
 
         Returns:
@@ -642,13 +646,19 @@ class Quaternion:
         """
         scalar_part = self.w
         vector_part = self.vector
-        vector_norm_sq = jnp.sum(vector_part**2, axis=-1)
-        is_real = vector_norm_sq == 0
+        # |v| is computed after rescaling v by its largest component, so that it does not
+        # underflow to zero when |v|² does.
+        max_abs_component = jnp.max(jnp.abs(vector_part), axis=-1)
+        is_real = max_abs_component == 0
+        safe_max_abs_component = jnp.where(is_real, 1.0, max_abs_component)
+        rescaled_norm_sq = jnp.sum((vector_part / safe_max_abs_component[..., None]) ** 2, axis=-1)
 
         # log(q) = log(|q|) + θ * v/|v|, with θ = atan2(|v|, s).
         # The where guards keep the gradients finite for real quaternions (|v| = 0).
-        log_norm = 0.5 * jnp.log(scalar_part**2 + vector_norm_sq)
-        safe_vector_norm = jnp.sqrt(jnp.where(is_real, 1.0, vector_norm_sq))
+        log_norm = 0.5 * jnp.log(scalar_part**2 + jnp.sum(vector_part**2, axis=-1))
+        safe_vector_norm = safe_max_abs_component * jnp.sqrt(
+            jnp.where(is_real, 1.0, rescaled_norm_sq)
+        )
         safe_scalar_part = jnp.where(scalar_part == 0, 1.0, scalar_part)
         # θ/|v| tends to 1/s when |v| → 0 (s > 0)
         theta_over_vector_norm = jnp.where(
@@ -657,6 +667,14 @@ class Quaternion:
             jnp.arctan2(safe_vector_norm, scalar_part) / safe_vector_norm,
         )
         log_q_vector = theta_over_vector_norm[..., None] * vector_part
+
+        # θ = π when v = 0 (s < 0), and the axis is i by convention
+        is_negative_real = is_real & (scalar_part < 0)
+        log_q_vector = jnp.where(
+            is_negative_real[..., None],
+            jnp.array([jnp.pi, 0, 0], dtype=log_q_vector.dtype),
+            log_q_vector,
+        )
 
         return self.from_scalar_vector(log_norm, log_q_vector)
 

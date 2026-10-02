@@ -84,6 +84,51 @@ def test_log_zero(do_jit):
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
+def test_log_negative_real(do_jit):
+    """Test that log(-a) = log(a) + π * i for a > 0."""
+
+    def func(q):
+        return q.log()
+
+    if do_jit:
+        func = jax.jit(func)
+
+    log_q = func(Quaternion.from_array(jnp.array([[-1.0, 0.0, 0.0, 0.0], [-4.0, 0.0, 0.0, 0.0]])))
+    expected = jnp.array([[0.0, jnp.pi, 0.0, 0.0], [jnp.log(4.0), jnp.pi, 0.0, 0.0]])
+    assert jnp.allclose(log_q.wxyz, expected, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_log_near_negative_real(do_jit):
+    """Test log of a negative quaternion whose squared vector norm underflows."""
+
+    def func(q):
+        return q.log()
+
+    if do_jit:
+        func = jax.jit(func)
+
+    log_q = func(Quaternion(-1.0, 0.0, 0.0, 1e-30))
+    expected = jnp.array([0.0, 0.0, 0.0, jnp.pi])
+    assert jnp.allclose(log_q.wxyz, expected, atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+@pytest.mark.parametrize('w', [-1.0, -4.0])
+def test_log_exp_inverse_negative_real(do_jit, w):
+    """Test that exp(log(q)) = q for negative real quaternions."""
+
+    def func(q):
+        return q.log().exp()
+
+    if do_jit:
+        func = jax.jit(func)
+
+    result = func(Quaternion(w))
+    assert jnp.allclose(result.wxyz, jnp.array([w, 0.0, 0.0, 0.0]), atol=1e-6)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
 def test_log_exp_batch(do_jit):
     """Test log and exp with batch of quaternions."""
 
@@ -256,6 +301,25 @@ def test_pow_fractional(do_jit):
     # Verify (q^0.5)^2 ≈ q
     double_half = result_half * result_half
     assert jnp.allclose(double_half.wxyz, q.wxyz, atol=1e-5)
+
+
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_pow_negative_real(do_jit):
+    """Test powers of negative real quaternions, which go through log(-a) = log(a) + π * i."""
+
+    def func(q, n):
+        return q**n
+
+    if do_jit:
+        func = jax.jit(func)
+
+    # (-1)^3 = -1
+    assert jnp.allclose(func(Quaternion(-1.0), 3).wxyz, jnp.array([-1.0, 0.0, 0.0, 0.0]), atol=1e-5)
+
+    # (-4)^0.5 = 2i, whose square is -4
+    sqrt_q = func(Quaternion(-4.0), jnp.array(0.5))
+    assert jnp.allclose(sqrt_q.wxyz, jnp.array([0.0, 2.0, 0.0, 0.0]), atol=1e-5)
+    assert jnp.allclose((sqrt_q * sqrt_q).wxyz, jnp.array([-4.0, 0.0, 0.0, 0.0]), atol=1e-5)
 
 
 @pytest.mark.parametrize('do_jit', [False, True])
