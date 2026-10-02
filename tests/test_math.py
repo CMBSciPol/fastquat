@@ -151,6 +151,31 @@ def test_rsub_real_array(array, do_jit):
     assert jnp.allclose(result.wxyz, expected)
 
 
+@pytest.mark.parametrize(
+    'func, expected_func',
+    [
+        (lambda q, a: q + a, lambda wxyz, a: wxyz.at[..., 0].add(a)),
+        (lambda q, a: a + q, lambda wxyz, a: wxyz.at[..., 0].add(a)),
+        (lambda q, a: q - a, lambda wxyz, a: wxyz.at[..., 0].add(-a)),
+        (lambda q, a: a - q, lambda wxyz, a: (-wxyz).at[..., 0].add(a)),
+    ],
+)
+@pytest.mark.parametrize('q_shape, array_shape', [((), (3,)), ((2, 1), (3,)), ((3,), (2, 1))])
+@pytest.mark.parametrize('do_jit', [False, True])
+def test_add_sub_real_array_broadcast(func, expected_func, q_shape, array_shape, do_jit):
+    """Test addition and subtraction of a real array broadcast against a quaternion."""
+    if do_jit:
+        func = jax.jit(func)
+
+    q = Quaternion.random(jax.random.key(0), q_shape)
+    array = jnp.arange(np.prod(array_shape), dtype=q.dtype).reshape(array_shape)
+    result = func(q, array)
+    shape = jnp.broadcast_shapes(q_shape, array_shape)
+    expected = expected_func(jnp.broadcast_to(q.wxyz, shape + (4,)), array)
+    assert result.shape == shape
+    assert jnp.allclose(result.wxyz, expected)
+
+
 # Multiplication
 @pytest.mark.parametrize('do_jit', [False, True])
 def test_mul_quaternion(do_jit):
