@@ -6,6 +6,7 @@ Tests for log, exp, __pow__, and the gradients of log and exp.
 import jax
 import jax.numpy as jnp
 import jax.test_util
+import numpy as np
 import pytest
 
 from fastquat import Quaternion
@@ -503,3 +504,19 @@ def test_log_jacobian_at_identity():
     jac = jax.jacobian(lambda v: Quaternion.from_scalar_vector(1.0, v).log().wxyz)(jnp.zeros(3))
     expected = jnp.concatenate([jnp.zeros((1, 3)), jnp.eye(3)])
     assert jnp.allclose(jac, expected)
+
+
+@pytest.mark.parametrize(
+    'exponent', [None, object(), 2**40], ids=['none', 'object', 'int-overflow']
+)
+def test_pow_unsupported_exponent(exponent):
+    """Test that unsupported exponents raise TypeError through NotImplemented."""
+    with pytest.raises(TypeError, match=r'unsupported operand type\(s\) for \*\* or pow\(\)'):
+        Quaternion(1.0, 2.0, 3.0, 4.0) ** exponent
+
+
+@pytest.mark.parametrize('exponent', [1j, np.complex128(1j), jnp.array([1j, 2.0])])
+def test_pow_complex(exponent):
+    """Test that exponentiation with complex numbers is not implemented."""
+    with pytest.raises(NotImplementedError):
+        Quaternion(1.0, 2.0, 3.0, 4.0) ** exponent

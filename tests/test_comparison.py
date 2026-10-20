@@ -117,7 +117,7 @@ def test_eq_complex():
         q != 1j
 
 
-@pytest.mark.parametrize('other', [None, 'quaternion', object()])
+@pytest.mark.parametrize('other', [None, 'quaternion', object(), 2**40])
 def test_eq_unrelated_type(other):
     """Test that comparison with unrelated types falls back to identity."""
     q = Quaternion(1.0)
