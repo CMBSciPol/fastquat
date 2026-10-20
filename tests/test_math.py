@@ -625,3 +625,34 @@ def test_zero_quaternion_operations(do_jit):
     assert jnp.allclose(mul_result.wxyz, jnp.zeros(4))
     # Negation: -0 = 0
     assert jnp.allclose(neg_result.wxyz, jnp.zeros(4))
+
+
+# Unsupported operands
+BINARY_OPS = [
+    pytest.param(lambda a, b: a + b, id='add'),
+    pytest.param(lambda a, b: a - b, id='sub'),
+    pytest.param(lambda a, b: a * b, id='mul'),
+    pytest.param(lambda a, b: a / b, id='truediv'),
+]
+
+
+@pytest.mark.parametrize('op', BINARY_OPS)
+@pytest.mark.parametrize('other', [None, object(), 2**40], ids=['none', 'object', 'int-overflow'])
+def test_binary_op_unsupported_operand(op, other):
+    """Test that unsupported operands raise TypeError through NotImplemented, in both orders."""
+    q = Quaternion(1.0, 2.0, 3.0, 4.0)
+    with pytest.raises(TypeError, match='unsupported operand'):
+        op(q, other)
+    with pytest.raises(TypeError, match='unsupported operand'):
+        op(other, q)
+
+
+@pytest.mark.parametrize('op', BINARY_OPS)
+@pytest.mark.parametrize('other', [1j, np.complex128(1j), jnp.array([1j, 2.0])])
+def test_binary_op_complex(op, other):
+    """Test that operations with complex numbers are not implemented, in both orders."""
+    q = Quaternion(1.0, 2.0, 3.0, 4.0)
+    with pytest.raises(NotImplementedError):
+        op(q, other)
+    with pytest.raises(NotImplementedError):
+        op(other, q)

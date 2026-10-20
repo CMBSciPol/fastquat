@@ -1,5 +1,6 @@
 import operator
 from collections.abc import Sequence
+from types import NotImplementedType
 from typing import Any, Self, SupportsIndex
 
 import jax
@@ -18,6 +19,23 @@ def _to_int_tuple(value: ShapeLike) -> tuple[int, ...]:
     if isinstance(value, Sequence):
         return tuple(operator.index(item) for item in value)
     return (operator.index(value),)
+
+
+def _as_operand(other: Any, operation: str) -> Array | NotImplementedType:
+    """Convert a non-quaternion operand to an array, or return NotImplemented if it can't be.
+
+    Raises:
+        NotImplementedError: If the operand is complex.
+    """
+    try:
+        other = jnp.asarray(other)
+    except (TypeError, ValueError, OverflowError):
+        return NotImplemented
+
+    if jnp.iscomplexobj(other):
+        raise NotImplementedError(f'Quaternion and complex {operation} is not implemented.')
+
+    return other
 
 
 @register_pytree_node_class
@@ -468,13 +486,9 @@ class Quaternion:
         if isinstance(other, Quaternion):
             return jnp.all(self.wxyz == other.wxyz, axis=-1)
 
-        try:
-            other = jnp.asarray(other)
-        except (TypeError, ValueError):  # jnp.asarray(None) raises ValueError
+        other = _as_operand(other, 'comparison')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex comparison is not implemented.')
 
         return (self.w == other) & jnp.all(self.vector == 0, axis=-1)
 
@@ -498,13 +512,9 @@ class Quaternion:
         if isinstance(other, Quaternion):
             return self.from_array(self.wxyz + other.wxyz)
 
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'addition')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex addition is not implemented.')
 
         return self.from_scalar_vector(self.w + other, self.vector)
 
@@ -517,25 +527,17 @@ class Quaternion:
         if isinstance(other, Quaternion):
             return self.from_array(self.wxyz - other.wxyz)
 
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'subtraction')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex subtraction is not implemented.')
 
         return self.from_scalar_vector(self.w - other, self.vector)
 
     def __rsub__(self, other: Any) -> Self:
         """Quaternion subtraction."""
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'subtraction')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex subtraction is not implemented.')
 
         return self.from_scalar_vector(other - self.w, -self.vector)
 
@@ -552,25 +554,17 @@ class Quaternion:
 
             return self.from_array(jnp.stack([w, x, y, z], axis=-1))
 
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'multiplication')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex multiplication is not implemented.')
 
         return self.from_array(self.wxyz * jnp.expand_dims(other, axis=-1))
 
     def __rmul__(self, other: Any) -> Self:
         """Quaternion multiplication."""
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'multiplication')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex multiplication is not implemented.')
 
         return self.from_array(jnp.expand_dims(other, axis=-1) * self.wxyz)
 
@@ -579,25 +573,17 @@ class Quaternion:
         if isinstance(other, Quaternion):
             return self * other._inverse()
 
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'division')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex division is not implemented.')
 
         return self.from_array(self.wxyz / jnp.expand_dims(other, axis=-1))
 
     def __rtruediv__(self, other: Any) -> Self:
         """Quaternion division."""
-        try:
-            other = jnp.asarray(other)
-        except TypeError:
+        other = _as_operand(other, 'division')
+        if other is NotImplemented:
             return NotImplemented
-
-        if jnp.iscomplexobj(other):
-            raise NotImplementedError('Quaternion and complex division is not implemented.')
 
         return other * self._inverse()
 
@@ -613,8 +599,9 @@ class Quaternion:
         Returns:
             The quaternion raised to the given power
         """
-        if jnp.iscomplexobj(exponent):
-            raise NotImplementedError('Quaternion and complex exponentiation is not implemented.')
+        exponent_array = _as_operand(exponent, 'exponentiation')
+        if exponent_array is NotImplemented:
+            return NotImplemented
 
         # Handle special cases for static integer exponents only
         if isinstance(exponent, int | float | np.number):
@@ -632,7 +619,7 @@ class Quaternion:
             return (exponent * self.log()).exp()
 
         # General case: q^n = exp(n * log(q))
-        exponent = jnp.asarray(exponent)
+        exponent = exponent_array
         result = (exponent * self.log()).exp().wxyz
         return self.from_array(
             jnp.where(
