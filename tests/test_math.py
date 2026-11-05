@@ -40,7 +40,7 @@ def test_add_radd_real_scalar(func, scalar, do_jit):
     if do_jit:
         func = jax.jit(func)
 
-    q = Quaternion(1.0, 2.0, 3.0, 4.0, dtype=jnp.float64)
+    q = Quaternion(1.0, 2.0, 3.0, 4.0)
     result = func(q, scalar)
     expected = jnp.array([2.0, 2.0, 3.0, 4.0])  # Only w component affected
     assert jnp.allclose(result.wxyz, expected)
