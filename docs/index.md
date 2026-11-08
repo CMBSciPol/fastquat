@@ -57,4 +57,4 @@ q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
   [Getting started](user-guide/getting-started.md),
   [Rotations](user-guide/tutorial-rotations.md), [SLERP](user-guide/tutorial-slerp.md)
 - **API Reference**: [Quaternion](api/quaternion.md)
-- **Development**: [Development guide](development.md)
+- **Developer Guide**: [Development](developer-guide.md)

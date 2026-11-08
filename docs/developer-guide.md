@@ -1,4 +1,4 @@
-# Development Guide
+# Development
 
 This guide covers how to contribute to FastQuat development.
 

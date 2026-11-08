@@ -22,8 +22,8 @@ nav = [
   { "API Reference" = [
       "api/quaternion.md",
   ] },
-  { "Development" = [
-      "development.md",
+  { "Developer Guide" = [
+      "developer-guide.md",
   ] },
 ]
 
