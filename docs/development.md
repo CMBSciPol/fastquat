@@ -163,12 +163,12 @@ from the docstrings by mkdocstrings. The user-guide tutorials are Jupyter notebo
 converted to Markdown pages before the build. To build locally:
 
 ```bash
-uv run --group docs jupyter nbconvert --to markdown --execute docs/user-guide/*.ipynb
-uv run zensical build
+uv run --group docs sh docs/build.sh
 ```
 
-The documentation will be available in `site/`. `uv run zensical serve` starts a live-reloading
-preview (it does not re-execute the notebooks).
+The documentation will be available in `site/`; serve it with `python -m http.server -d site`.
+`uv run zensical serve` also works as a live-reloading preview, but it neither re-executes the
+notebooks nor applies the layout adjustments of `docs/build.sh`.
 
 The notebooks are committed with their outputs stripped: pytest executes them as regression tests
 (`pytest-notebook`), and the CI docs job executes them again when converting them for the site.

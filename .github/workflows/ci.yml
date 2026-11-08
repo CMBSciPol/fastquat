@@ -85,8 +85,5 @@ jobs:
         with:
           version: '0.12.18'
 
-      - name: Execute the notebooks and convert them to Markdown
-        run: uv run --locked --group docs --no-dev jupyter nbconvert --to markdown --execute docs/user-guide/*.ipynb
-
       - name: Build the site
-        run: uv run --no-sync zensical build
+        run: uv run --locked --group docs --no-dev sh docs/build.sh

@@ -12,9 +12,8 @@ build:
       - pip install uv
     build:
       html:
-        # Execute the notebooks and convert them to the Markdown pages the nav references
-        - uv run --group docs --no-dev jupyter nbconvert --to markdown --execute docs/user-guide/*.ipynb
-        - uv run --no-sync zensical build
+        # Execute the notebooks, build the site and adjust the layout breakpoint
+        - uv run --group docs --no-dev sh docs/build.sh
     post_build:
       - mkdir -p $READTHEDOCS_OUTPUT/html/
       - cp --recursive site/* $READTHEDOCS_OUTPUT/html/
