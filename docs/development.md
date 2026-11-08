@@ -158,14 +158,20 @@ def test_new_method(parameter, expected_values, do_jit):
 
 ## Documentation
 
-Documentation is built using Sphinx with MyST parser for Markdown support. To build locally:
+Documentation is built using [Zensical](https://zensical.org), with the API reference generated
+from the docstrings by mkdocstrings. The user-guide tutorials are Jupyter notebooks, executed and
+converted to Markdown pages before the build. To build locally:
 
 ```bash
-cd docs
-make html
+uv run --group docs jupyter nbconvert --to markdown --execute docs/user-guide/*.ipynb
+uv run zensical build
 ```
 
-The documentation will be available in `docs/build/html/`.
+The documentation will be available in `site/`. `uv run zensical serve` starts a live-reloading
+preview (it does not re-execute the notebooks).
+
+The notebooks are committed with their outputs stripped: pytest executes them as regression tests
+(`pytest-notebook`), and the CI docs job executes them again when converting them for the site.
 
 ## Release Process
 

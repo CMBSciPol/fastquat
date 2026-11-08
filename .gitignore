@@ -8,6 +8,10 @@ build/
 .ipynb_checkpoints/
 .DS_Store
 
-# Sphinx generated files
-docs/build/
-docs/source/api/generated/
+# Zensical generated files
+/site/
+# Markdown pages generated from the notebooks by nbconvert
+docs/user-guide/getting-started.md
+docs/user-guide/tutorial-rotations.md
+docs/user-guide/tutorial-slerp.md
+docs/user-guide/*_files/
