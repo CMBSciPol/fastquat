@@ -1,4 +1,4 @@
-# Development Guide
+# Development
 
 This guide covers how to contribute to FastQuat development.
 
@@ -158,14 +158,20 @@ def test_new_method(parameter, expected_values, do_jit):
 
 ## Documentation
 
-Documentation is built using Sphinx with MyST parser for Markdown support. To build locally:
+Documentation is built using [Zensical](https://zensical.org), with the API reference generated
+from the docstrings by mkdocstrings. The user-guide tutorials are Jupyter notebooks, executed and
+converted to Markdown pages before the build. To build locally:
 
 ```bash
-cd docs
-make html
+uv run --group docs sh docs/build.sh
 ```
 
-The documentation will be available in `docs/build/html/`.
+The documentation will be available in `site/`; serve it with `python -m http.server -d site`.
+`uv run zensical serve` also works as a live-reloading preview, but it neither re-executes the
+notebooks nor applies the layout adjustments of `docs/build.sh`.
+
+The notebooks are committed with their outputs stripped: pytest executes them as regression tests
+(`pytest-notebook`), and the CI docs job executes them again when converting them for the site.
 
 ## Release Process
 

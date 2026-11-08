@@ -51,32 +51,10 @@ q2 = Quaternion(0.7071, 0.7071, 0.0, 0.0)  # 90° rotation around x-axis
 | Log | `q.log()` | Quaternion logarithm |
 | Exp | `q.exp()` | Quaternion exponential |
 
-```{toctree}
-:maxdepth: 2
-:caption: User Guide
+## Documentation Contents
 
-user-guide/installation
-user-guide/getting-started
-user-guide/tutorial-rotations
-user-guide/tutorial-slerp
-```
-
-```{toctree}
-:maxdepth: 2
-:caption: API Reference
-
-api/quaternion
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Development
-
-development
-```
-
-## Indices and tables
-
-* {ref}`genindex`
-* {ref}`modindex`
-* {ref}`search`
+- **User Guide**: [Installation](user-guide/installation.md),
+  [Getting started](user-guide/getting-started.md),
+  [Rotations](user-guide/tutorial-rotations.md), [SLERP](user-guide/tutorial-slerp.md)
+- **API Reference**: [Quaternion](api/quaternion.md)
+- **Developer Guide**: [Development](developer-guide.md)

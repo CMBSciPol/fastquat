@@ -69,3 +69,21 @@ jobs:
 
       - name: Run tests
         run: uv run --no-sync pytest -v
+
+  docs:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: '0.12.18'
+
+      - name: Build the site
+        run: uv run --locked --group docs --no-dev sh docs/build.sh
