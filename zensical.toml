@@ -1,0 +1,128 @@
+[project]
+site_name = "FastQuat documentation"
+site_description = "High-performance quaternions with JAX support."
+site_author = "FastQuat contributors"
+site_url = "https://fastquat.readthedocs.io/en"
+copyright = "&copy; 2025-2026 FastQuat contributors"
+repo_url = "https://github.com/CMBSciPol/fastquat"
+repo_name = "CMBSciPol/fastquat"
+edit_uri = "edit/main/docs/"
+
+# https://zensical.org/docs/setup/navigation/
+# The user-guide tutorial pages are generated from the notebooks before the build:
+# uv run --group docs jupyter nbconvert --to markdown --execute docs/user-guide/*.ipynb
+nav = [
+  { "Home" = "index.md" },
+  { "User Guide" = [
+      "user-guide/installation.md",
+      "user-guide/getting-started.md",
+      "user-guide/tutorial-rotations.md",
+      "user-guide/tutorial-slerp.md",
+  ] },
+  { "API Reference" = [
+      "api/quaternion.md",
+  ] },
+  { "Development" = [
+      "development.md",
+  ] },
+]
+
+extra_css = [
+    "stylesheets/extra.css",
+]
+
+# https://zensical.org/docs/authoring/math/
+extra_javascript = [
+    "javascripts/mathjax.js",
+    "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"
+]
+
+[project.plugins.mkdocstrings.handlers.python]
+inventories = [
+    "https://docs.python.org/3/objects.inv",
+    "https://numpy.org/doc/stable/objects.inv",
+    "https://jax.readthedocs.io/en/latest/objects.inv",
+]
+paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+# Parse docstrings as Google style, rendering sections as lists (not tables).
+docstring_style = "google"
+docstring_section_style = "list"
+# Keep source order.
+members_order = "source"
+# Cross-references: resolve [`Name`][] by scope, by dotted relative path, and in signatures.
+relative_crossrefs = true
+scoped_crossrefs = true
+signature_crossrefs = true
+# Render a heading for the symbol requested directly by a `:::` block.
+show_root_heading = true
+# Render symbols with no docstring; document only public (non-_) names.
+show_if_no_docstring = true
+filters = "public"
+# Drop the __init__ summary line (merged into the class).
+docstring_options.ignore_init_summary = true
+# Member summary tables at the top of each page.
+summary = true
+# Symbol-type tags in headings and the right-hand table of contents.
+show_symbol_type_heading = true
+show_symbol_type_toc = true
+
+[project.markdown_extensions]
+admonition = {}
+pymdownx.details = {}
+pymdownx.superfences = {}
+pymdownx.highlight = { anchor_linenums = true, line_spans = "__span", pygments_lang_class = true }
+pymdownx.inlinehilite = {}
+pymdownx.snippets = {}
+pymdownx.tabbed = { alternate_style = true }
+footnotes = {}
+pymdownx.caret = {}
+pymdownx.keys = {}
+pymdownx.mark = {}
+pymdownx.tilde = {}
+pymdownx.arithmatex = { generic = true }
+pymdownx.magiclink = { repo_url_shorthand = true, user = "CMBSciPol", repo = "fastquat" }
+pymdownx.emoji = {}
+abbr = {}
+attr_list = {}
+def_list = {}
+pymdownx.tasklist = { custom_checkbox = true }
+
+[project.theme]
+language = "en"
+icon.repo = "fontawesome/brands/github"
+
+features = [
+    "content.action.edit",
+    "content.code.copy",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.progress",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+    "search.share",
+    "search.suggest",
+    "toc.follow",
+]
+
+palette = [
+  {
+    media = "(prefers-color-scheme)",
+    toggle = { icon = "lucide/sun-moon", name = "Switch to light mode" }
+  },
+  {
+    media = "(prefers-color-scheme: light)",
+    scheme = "default",
+    toggle = { icon = "lucide/sun", name = "Switch to dark mode" }
+  },
+  {
+    media = "(prefers-color-scheme: dark)",
+    scheme = "slate",
+    toggle = { icon = "lucide/moon", name = "Switch to system preference" }
+  },
+]
